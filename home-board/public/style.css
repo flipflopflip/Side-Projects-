@@ -232,3 +232,121 @@ body {
 
 /* Show the mouse again if the user is interacting (e.g. with the to-do list) */
 body.interactive { cursor: default; }
+
+/* ============================================================
+   Pip-Boy theme (Fallout-style phosphor CRT)
+   Activated by data-theme="pipboy" (green) or "pipboy-amber"
+   on <body>; picked on the Settings page. The default indigo
+   theme above is untouched.
+   ============================================================ */
+
+body[data-theme="pipboy"] {
+  --ph: #34ff6e;                       /* phosphor */
+  --ph-dim: rgba(52, 255, 110, 0.55);
+  --ph-faint: rgba(52, 255, 110, 0.28);
+  --ph-bg: #051207;
+  --icon-filter: grayscale(1) sepia(1) hue-rotate(65deg) saturate(4.5) brightness(1.05);
+}
+body[data-theme="pipboy-amber"] {
+  --ph: #ffb642;
+  --ph-dim: rgba(255, 182, 66, 0.55);
+  --ph-faint: rgba(255, 182, 66, 0.26);
+  --ph-bg: #120b03;
+  --icon-filter: grayscale(1) sepia(1) hue-rotate(-12deg) saturate(5) brightness(1.05);
+}
+
+body[data-theme^="pipboy"] {
+  background: radial-gradient(120% 90% at 50% 40%, var(--ph-bg) 0%, #010301 100%);
+  color: var(--ph);
+  font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+  font-weight: 400;
+  text-shadow: 0 0 6px var(--ph-faint);
+}
+
+/* CRT furniture: scanlines above everything, vignette beneath them */
+body[data-theme^="pipboy"]::before {
+  content: ""; position: fixed; inset: 0; z-index: 8; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+}
+body[data-theme^="pipboy"]::after {
+  content: ""; position: fixed; inset: 0; z-index: 9; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg, rgba(0, 0, 0, 0.22) 0px, rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px, transparent 3px);
+}
+@keyframes pip-flicker {
+  0%, 100% { opacity: 1; }
+  97%      { opacity: 1; }
+  98%      { opacity: 0.93; }
+  99%      { opacity: 0.98; }
+}
+body[data-theme^="pipboy"] .board {
+  animation: pip-flicker 11s infinite;
+}
+
+/* Text hierarchy: bright phosphor for data, dim for labels */
+body[data-theme^="pipboy"] .dimmed,
+body[data-theme^="pipboy"] #clock .date,
+body[data-theme^="pipboy"] #clock .seconds,
+body[data-theme^="pipboy"] .cal-day,
+body[data-theme^="pipboy"] .cal-event .cal-time,
+body[data-theme^="pipboy"] #plants-list .plant-status,
+body[data-theme^="pipboy"] #weather-forecast td:first-child,
+body[data-theme^="pipboy"] #weather-forecast .min,
+body[data-theme^="pipboy"] #weather-forecast .rain,
+body[data-theme^="pipboy"] #news-source,
+body[data-theme^="pipboy"] #cinema-times {
+  color: var(--ph-dim);
+}
+body[data-theme^="pipboy"] .cal-event,
+body[data-theme^="pipboy"] #todo-list li,
+body[data-theme^="pipboy"] #plants-list li,
+body[data-theme^="pipboy"] #clock .time,
+body[data-theme^="pipboy"] .weather-temp,
+body[data-theme^="pipboy"] #weather-details,
+body[data-theme^="pipboy"] #weather-forecast,
+body[data-theme^="pipboy"] #news-headline,
+body[data-theme^="pipboy"] #cinema-film {
+  color: var(--ph);
+}
+body[data-theme^="pipboy"] #clock .time {
+  text-shadow: 0 0 14px var(--ph-faint), 0 0 3px var(--ph-dim);
+  font-weight: 400;
+}
+
+/* Section headers become inverse-video bars, like a selected Pip-Boy tab */
+body[data-theme^="pipboy"] .module h2,
+body[data-theme^="pipboy"] .module-header {
+  background: var(--ph);
+  color: #041004;
+  border-bottom: none;
+  padding: 3px 10px 2px;
+  text-shadow: none;
+  font-weight: 700;
+}
+
+/* Borders and rules pick up the phosphor tint */
+body[data-theme^="pipboy"] #todo-form input {
+  border-bottom: 1px solid var(--ph-faint);
+  color: var(--ph);
+  font-family: inherit;
+}
+body[data-theme^="pipboy"] #todo-form input::placeholder { color: var(--ph-faint); }
+body[data-theme^="pipboy"] #todo-list li.done span.todo-text,
+body[data-theme^="pipboy"] #plants-list li.overdue .plant-name,
+body[data-theme^="pipboy"] #plants-list li.overdue .plant-status {
+  color: var(--ph-dim);
+}
+body[data-theme^="pipboy"] #todo-list button { color: var(--ph-faint); }
+
+/* Weather glyphs rendered as tinted monochrome so they sit in the palette */
+body[data-theme^="pipboy"] .weather-icon,
+body[data-theme^="pipboy"] #weather-forecast td:nth-child(2) {
+  filter: var(--icon-filter);
+}
+
+/* To-do items get terminal-style markers */
+body[data-theme^="pipboy"] #todo-list .todo-text::before {
+  content: "> ";
+  color: var(--ph-dim);
+}

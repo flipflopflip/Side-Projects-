@@ -614,7 +614,11 @@ def public_config():
         # Whether the always-on display itself may make changes; the phone
         # page (with the password, when required) always can.
         "displayEditable": display_can_write(),
+        "theme": CONFIG.get("theme", "default"),
     }
+
+
+THEMES = ("default", "pipboy", "pipboy-amber")
 
 
 def display_can_write():
@@ -649,6 +653,9 @@ def save_config(incoming):
     new["city"] = city
 
     new["units"] = "imperial" if incoming.get("units") == "imperial" else "metric"
+
+    theme = incoming.get("theme", CONFIG.get("theme", "default"))
+    new["theme"] = theme if theme in THEMES else "default"
 
     feeds = [_clean_url(u) for u in incoming.get("newsFeeds", []) if str(u).strip()]
     new["newsFeeds"] = feeds

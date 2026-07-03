@@ -3,6 +3,7 @@
   "lanAccess": false,
   "password": "",
   "allowDisplayEditing": false,
+  "theme": "pipboy-amber",
   "city": "Garrykennedy",
   "latitude": 52.8747,
   "longitude": -8.3564,

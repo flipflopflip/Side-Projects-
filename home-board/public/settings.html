@@ -224,6 +224,21 @@
 
     <section class="card">
       <div class="card-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <h2>Appearance</h2>
+      </div>
+      <label class="field-label" for="theme">Board theme</label>
+      <select id="theme">
+        <option value="default">Modern — indigo, shifts with the time of day</option>
+        <option value="pipboy-amber">Pip-Boy — amber phosphor terminal</option>
+        <option value="pipboy">Pip-Boy — green phosphor terminal</option>
+      </select>
+      <div class="hint">The retro terminal themes add scanlines and a CRT glow
+        to the big display. The board switches within half a minute of saving.</div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         <h2>Weather</h2>
       </div>
@@ -337,6 +352,7 @@
 
     async function load() {
       const cfg = await (await fetch("/api/config")).json();
+      $("theme").value = cfg.theme || "default";
       $("city").value = cfg.city || "";
       document.querySelector(`input[name=units][value="${cfg.units || "metric"}"]`).checked = true;
 
@@ -380,6 +396,7 @@
       save.disabled = true;
       save.textContent = "Saving…";
       const payload = {
+        theme: $("theme").value,
         city: $("city").value,
         units: document.querySelector("input[name=units]:checked").value,
         calendarIcsUrl: $("calendar").value,

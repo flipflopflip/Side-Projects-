@@ -353,14 +353,23 @@ once the connection is back.
 
 ## Look & feel
 
-The background is a soft gradient that drifts through the day on its own —
-warm amber tones around dawn, cool slate-blue at midday, indigo in the
-evening, and near-black (with slightly dimmed text) at night. Beyond looking
-nicer than flat black, the slow colour shift keeps the pixels from being
-perfectly static, which helps an old always-on LCD avoid image retention.
-It's fully automatic; there's nothing to configure. To tweak the palette,
-edit the `AMBIENCE_STOPS` table near the top of `public/main.js` (each row is
-`[hour, topColour, bottomColour, brightness]`).
+There are three themes, switchable from the **Settings page** (Appearance
+card) or with `"theme"` in `config.json`:
+
+- **`pipboy-amber`** (the default) — a Fallout: New Vegas-style amber
+  phosphor terminal: monospace type, glowing text, scanlines, CRT vignette,
+  inverse-video section headers and `>` prompts on the to-do list.
+- **`pipboy`** — the same, in classic Pip-Boy green.
+- **`default`** — a modern look with a soft gradient that drifts through the
+  day on its own: warm amber tones around dawn, cool slate-blue at midday,
+  indigo in the evening, and near-black (with slightly dimmed text) at night.
+  To tweak its palette, edit the `AMBIENCE_STOPS` table near the top of
+  `public/main.js` (each row is `[hour, topColour, bottomColour, brightness]`).
+
+The display checks for a theme change every 30 seconds, so a switch saved on
+the Settings page appears without restarting anything. In all themes the
+pixels are never perfectly static (drifting gradient, or the CRT flicker),
+which helps an old always-on LCD avoid image retention.
 
 ## Customising
 

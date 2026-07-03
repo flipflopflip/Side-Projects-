@@ -41,6 +41,8 @@ function lerp(a, b, t) { return a + (b - a) * t; }
 function rgb(c) { return `rgb(${Math.round(c[0])}, ${Math.round(c[1])}, ${Math.round(c[2])})`; }
 
 function updateAmbience() {
+  // Themed modes (e.g. Pip-Boy) supply their own fixed background.
+  if (document.body.dataset.theme && document.body.dataset.theme !== "default") return;
   const now = new Date();
   const hour = now.getHours() + now.getMinutes() / 60;
   let lo = AMBIENCE_STOPS[0], hi = AMBIENCE_STOPS[AMBIENCE_STOPS.length - 1];
@@ -330,9 +332,8 @@ document.addEventListener("mousemove", () => {
 });
 
 /* ---------- Display mode ---------- */
-/* When the board is read-only (LAN access is on and editing from the big
-   screen is disabled), hide the "add a task" box so it isn't misleading —
-   changes are made from the phone instead. */
+/* Applies server-side presentation settings: hides the "add a task" box when
+   the board is read-only (changes come from the phone), and switches theme. */
 async function applyDisplayMode() {
   try {
     const cfg = await getJSON("/api/config");
@@ -340,8 +341,10 @@ async function applyDisplayMode() {
       const form = document.getElementById("todo-form");
       if (form) form.hidden = true;
     }
+    document.body.dataset.theme = cfg.theme || "default";
   } catch { /* default to showing the input */ }
 }
+setInterval(applyDisplayMode, 30 * 1000); // picks up theme changes from Settings
 
 /* ---------- Kick everything off ---------- */
 
