@@ -289,9 +289,21 @@ closing the lid doesn't sleep the machine if you'll use an external monitor.)
 | One news source never appears | Open the feed URL in a browser — if it's not XML, replace it |
 | Blank screen in Edge | Is the server running? Open <http://localhost:8480> manually to see the error |
 
+## Look & feel
+
+The background is a soft gradient that drifts through the day on its own —
+warm amber tones around dawn, cool slate-blue at midday, indigo in the
+evening, and near-black (with slightly dimmed text) at night. Beyond looking
+nicer than flat black, the slow colour shift keeps the pixels from being
+perfectly static, which helps an old always-on LCD avoid image retention.
+It's fully automatic; there's nothing to configure. To tweak the palette,
+edit the `AMBIENCE_STOPS` table near the top of `public/main.js` (each row is
+`[hour, topColour, bottomColour, brightness]`).
+
 ## Customising
 
 - **Layout / colours / sizes** — everything visual is in `public/style.css`.
+- **Time-of-day background** — the `AMBIENCE_STOPS` table in `public/main.js`.
 - **Refresh timings & modules** — top of `public/main.js`.
 - **Data fetching** — `server.py` (each module is a small, separate function).
 

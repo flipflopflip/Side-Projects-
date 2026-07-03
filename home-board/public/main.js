@@ -18,6 +18,52 @@ async function getJSON(url) {
   return data;
 }
 
+/* ---------- Ambience (time-of-day background) ---------- */
+/* The gradient and overall brightness drift through the day. Colours are
+   keyframed by hour and linearly interpolated; the slow shift also keeps
+   the pixels from being perfectly static, which helps an old LCD avoid
+   image retention. Each stop: [hour, topRGB, bottomRGB, brightness]. */
+
+const AMBIENCE_STOPS = [
+  [0,  [8, 9, 15],   [2, 2, 5],    0.70],  // deep night
+  [5,  [20, 14, 26], [30, 18, 16], 0.82],  // pre-dawn: plum with a warm base
+  [7,  [36, 22, 30], [58, 34, 20], 0.95],  // dawn: amber glow, low
+  [10, [16, 21, 34], [22, 28, 42], 1.00],  // morning
+  [13, [14, 18, 26], [22, 29, 44], 1.00],  // midday: charcoal -> soft slate blue
+  [17, [22, 17, 34], [34, 22, 44], 1.00],  // evening: indigo
+  [20, [24, 16, 36], [30, 18, 40], 0.92],  // dusk: dusky purple
+  [22, [12, 10, 20], [8, 7, 15],   0.80],  // late evening
+  [24, [8, 9, 15],   [2, 2, 5],    0.70],  // wraps back to deep night
+];
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function rgb(c) { return `rgb(${Math.round(c[0])}, ${Math.round(c[1])}, ${Math.round(c[2])})`; }
+
+function updateAmbience() {
+  const now = new Date();
+  const hour = now.getHours() + now.getMinutes() / 60;
+  let lo = AMBIENCE_STOPS[0], hi = AMBIENCE_STOPS[AMBIENCE_STOPS.length - 1];
+  for (let i = 0; i < AMBIENCE_STOPS.length - 1; i++) {
+    if (hour >= AMBIENCE_STOPS[i][0] && hour <= AMBIENCE_STOPS[i + 1][0]) {
+      lo = AMBIENCE_STOPS[i];
+      hi = AMBIENCE_STOPS[i + 1];
+      break;
+    }
+  }
+  const span = hi[0] - lo[0];
+  const t = span > 0 ? (hour - lo[0]) / span : 0;
+  const top = [0, 1, 2].map((k) => lerp(lo[1][k], hi[1][k], t));
+  const bottom = [0, 1, 2].map((k) => lerp(lo[2][k], hi[2][k], t));
+  const brightness = lerp(lo[3], hi[3], t);
+
+  document.body.style.setProperty("--bg-top", rgb(top));
+  document.body.style.setProperty("--bg-bottom", rgb(bottom));
+  document.body.style.setProperty("--board-brightness", brightness.toFixed(3));
+}
+updateAmbience();
+setInterval(updateAmbience, 60 * 1000);
+
 /* ---------- Clock ---------- */
 
 function updateClock() {

@@ -2,9 +2,18 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Time-of-day background. JS updates --bg-top/--bg-bottom every minute; the
+   @property registrations let the gradient animate smoothly between them
+   instead of snapping. Falls back to a flat dark gradient if unsupported. */
+@property --bg-top {
+  syntax: "<color>"; inherits: true; initial-value: #0b0f18;
+}
+@property --bg-bottom {
+  syntax: "<color>"; inherits: true; initial-value: #040508;
+}
+
 html, body {
   height: 100%;
-  background: #000;
   color: #fff;
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-weight: 300;
@@ -12,9 +21,21 @@ html, body {
   cursor: none;
 }
 
+html { background: #000; }
+
+body {
+  --bg-top: #0b0f18;
+  --bg-bottom: #040508;
+  background: linear-gradient(160deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+  transition: --bg-top 60s linear, --bg-bottom 60s linear;
+}
+
 .board {
   height: 100vh;
   padding: 40px 50px;
+  /* Gently dims the whole board late at night; JS sets --board-brightness. */
+  filter: brightness(var(--board-brightness, 1));
+  transition: filter 60s linear;
   display: grid;
   grid-template-columns: 1fr 1.1fr 1fr;
   grid-template-rows: 1fr auto;
