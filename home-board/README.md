@@ -318,6 +318,16 @@ powercfg /change standby-timeout-ac 0
 (Leave the laptop plugged in; also check *Settings → System → Power* that
 closing the lid doesn't sleep the machine if you'll use an external monitor.)
 
+### 6. Vertical monitor (optional)
+
+The layout adapts to a portrait screen automatically — clock and calendar
+top-left, weather and cinema top-right, the Today list mid-screen, news at
+the bottom. To rotate Windows: right-click the desktop → **Display
+settings** → **Display orientation** → **Portrait** (pick *Portrait,
+flipped* if it comes out upside-down for how you've mounted the screen).
+On many laptops **Ctrl+Alt+arrow keys** does the same thing. Nothing to
+change in Home Board itself.
+
 ---
 
 ## Using it

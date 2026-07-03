@@ -50,6 +50,29 @@ body {
 .top-right { grid-area: right; text-align: right; }
 .bottom    { grid-area: bottom; text-align: center; padding-bottom: 10px; }
 
+/* Portrait / vertical monitor: two columns up top (clock+calendar left,
+   weather+cinema right), the Today list mid-screen, news at the bottom.
+   Applies automatically when the screen is rotated. */
+@media (orientation: portrait) {
+  .board {
+    padding: 44px 44px 30px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "left   right"
+      "center center"
+      "bottom bottom";
+    gap: 10px 36px;
+  }
+  #clock .time { font-size: 72px; }
+  #clock .seconds { font-size: 26px; }
+  .weather-temp { font-size: 64px; }
+  .weather-icon { font-size: 52px; }
+  .cal-event { max-width: none; }
+  /* Sit the Today list in the upper half of the free space, not dead centre */
+  .center { padding-bottom: 16vh; }
+}
+
 .region { min-width: 0; }
 
 .dimmed { color: #888; }
