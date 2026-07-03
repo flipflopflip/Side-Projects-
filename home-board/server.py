@@ -55,6 +55,27 @@ def http_get(url, timeout=15):
         return resp.read()
 
 
+CACHE_DIR = BASE_DIR / "cache"
+
+
+def resilient(name, producer):
+    """Run producer(); on success cache it to disk, on failure serve the last
+    good copy (flagged "stale") so a brief internet blip doesn't blank a panel.
+    """
+    try:
+        data = producer()
+        CACHE_DIR.mkdir(exist_ok=True)
+        (CACHE_DIR / f"{name}.json").write_text(json.dumps(data), encoding="utf-8")
+        return data
+    except Exception:
+        backup = CACHE_DIR / f"{name}.json"
+        if backup.exists():
+            data = json.loads(backup.read_text(encoding="utf-8"))
+            data["stale"] = True
+            return data
+        raise
+
+
 # ---------------------------------------------------------------------------
 # Weather (Open-Meteo, free, no API key)
 # ---------------------------------------------------------------------------
@@ -570,6 +591,76 @@ def remove_plant(index):
 
 
 # ---------------------------------------------------------------------------
+# Settings (edited from the browser at /settings, saved to config.json)
+# ---------------------------------------------------------------------------
+
+def public_config():
+    """The config as shown to the settings page. The calendar's secret URL is
+    withheld — we only report whether one is saved — so it isn't handed out to
+    every device on the Wi-Fi."""
+    cinema = CONFIG.get("cinema", {}) or {}
+    return {
+        "city": CONFIG.get("city", ""),
+        "units": CONFIG.get("units", "metric"),
+        "newsFeeds": CONFIG.get("newsFeeds", []),
+        "calendarConfigured": bool(CONFIG.get("calendarIcsUrl")),
+        "cinema": {
+            "provider": cinema.get("provider", "off"),
+            "venue": cinema.get("venue", ""),
+            "displayName": cinema.get("displayName", ""),
+        },
+    }
+
+
+def _clean_url(value):
+    value = str(value).strip()
+    if value and not value.startswith(("http://", "https://", "webcal://")):
+        raise ValueError(f"Not a valid URL: {value[:60]}")
+    return value.replace("webcal://", "https://", 1) if value else ""
+
+
+def save_config(incoming):
+    """Validate the settings-page payload, merge into config.json, and apply it
+    live (clearing caches so the change shows immediately)."""
+    new = dict(CONFIG)  # start from current, overwrite only known fields
+
+    city = str(incoming.get("city", "")).strip()
+    if not city:
+        raise ValueError("City can't be empty")
+    new["city"] = city
+    # A typed city overrides any previously pinned coordinates.
+    new["latitude"] = None
+    new["longitude"] = None
+
+    new["units"] = "imperial" if incoming.get("units") == "imperial" else "metric"
+
+    feeds = [_clean_url(u) for u in incoming.get("newsFeeds", []) if str(u).strip()]
+    new["newsFeeds"] = feeds
+
+    # Blank calendar field means "keep the one already saved".
+    cal = str(incoming.get("calendarIcsUrl", "")).strip()
+    if cal:
+        new["calendarIcsUrl"] = _clean_url(cal)
+
+    cin = incoming.get("cinema", {}) or {}
+    provider = cin.get("provider", "off")
+    if provider not in ("off", "omniplex", "cineworld", "manual"):
+        provider = "off"
+    new["cinema"] = {
+        **(CONFIG.get("cinema", {}) or {}),
+        "provider": provider,
+        "venue": str(cin.get("venue", "")).strip(),
+        "displayName": str(cin.get("displayName", "")).strip(),
+    }
+
+    CONFIG_FILE.write_text(json.dumps(new, indent=2), encoding="utf-8")
+    CONFIG.clear()
+    CONFIG.update(new)
+    _cache.clear()  # drop cached weather/news/cinema so new settings take effect
+    return public_config()
+
+
+# ---------------------------------------------------------------------------
 # HTTP handler
 # ---------------------------------------------------------------------------
 
@@ -592,20 +683,22 @@ class MirrorHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/api/weather":
-            self.handle_api(get_weather, ttl=15 * 60)
+            self.handle_api(lambda: resilient("weather", get_weather), ttl=15 * 60)
         elif self.path == "/api/news":
-            self.handle_api(get_news, ttl=10 * 60)
+            self.handle_api(lambda: resilient("news", get_news), ttl=10 * 60)
         elif self.path == "/api/calendar":
-            self.handle_api(get_calendar, ttl=10 * 60)
+            self.handle_api(lambda: resilient("calendar", get_calendar), ttl=10 * 60)
         elif self.path == "/api/cinema":
-            self.handle_api(get_cinema, ttl=3 * 3600)
+            self.handle_api(lambda: resilient("cinema", get_cinema), ttl=3 * 3600)
         elif self.path == "/api/todos":
             self.send_json({"items": get_todos()})
         elif self.path == "/api/plants":
             self.send_json(get_plants())
+        elif self.path == "/api/config":
+            self.send_json(public_config())
         else:
-            if self.path == "/todo":  # phone-friendly page
-                self.path = "/todo.html"
+            if self.path in ("/todo", "/settings"):  # friendly URLs
+                self.path += ".html"
             super().do_GET()
 
     def read_json_body(self):
@@ -635,6 +728,11 @@ class MirrorHandler(SimpleHTTPRequestHandler):
             try:
                 data = self.read_json_body()
                 self.send_json(remove_plant(int(data.get("index", -1))))
+            except Exception as exc:
+                self.send_json({"error": str(exc)}, status=400)
+        elif self.path == "/api/config":
+            try:
+                self.send_json(save_config(self.read_json_body()))
             except Exception as exc:
                 self.send_json({"error": str(exc)}, status=400)
         else:

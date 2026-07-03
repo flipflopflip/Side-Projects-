@@ -19,16 +19,29 @@ plus a plain HTML/CSS/JS page, so it runs happily on old hardware.
 
 ---
 
-## Configuration — everything is in ONE file: `config.json`
+## Configuration — the easy way: the Settings page
 
-You never need to touch the code. **Every setting lives in
-`home-board/config.json`.** Open it by right-clicking the file →
-*Open with* → *Notepad*. It looks like this:
+Once Home Board is running, open **<http://localhost:8480/settings>** (on the
+laptop, or on your phone via the same Wi-Fi address as the to-do page). You
+get a simple form for your city, units, calendar link, news feeds and cinema —
+fill it in, hit **Save**, and the board updates within a few seconds. No files,
+no risk of a missing comma. This is the recommended way to set things up.
+
+The city defaults to **Limerick** and the cinema to **Omniplex Limerick**, so
+weather and films are correct out of the box — you mainly just need to paste
+your calendar link (see [Calendar](#connecting-your-google-calendar)).
+
+## Configuration — the manual way: `config.json`
+
+Prefer editing a file, or need an advanced setting (port, LAN access,
+fixed coordinates)? **Every setting also lives in `home-board/config.json`.**
+Open it by right-clicking the file → *Open with* → *Notepad*. It looks like
+this:
 
 ```json
 {
   "port": 8480,
-  "city": "London",
+  "city": "Limerick",
   "latitude": null,
   "longitude": null,
   "units": "metric",
@@ -288,6 +301,19 @@ closing the lid doesn't sleep the machine if you'll use an external monitor.)
 | "Calendar unavailable" / no events | Open the `calendarIcsUrl` in a browser — it should download a `.ics` file. If not, re-copy the secret address. |
 | One news source never appears | Open the feed URL in a browser — if it's not XML, replace it |
 | Blank screen in Edge | Is the server running? Open <http://localhost:8480> manually to see the error |
+
+## Keeping it updated
+
+If you installed with Git (`git clone`), double-click **`update_home_board.bat`**
+to pull the latest version, then start the board again. If you downloaded a ZIP
+instead, just re-download the latest ZIP and unzip it over the folder.
+
+## Staying up when the internet blips
+
+Home Board remembers the last good weather, news and cinema listings on disk
+(in a `cache/` folder). If the connection drops briefly, the panels keep
+showing the most recent data instead of going blank, and refresh on their own
+once the connection is back.
 
 ## Look & feel
 

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Home Board — Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="theme-color" content="#000000">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #000; color: #fff;
+      font-family: "Segoe UI", -apple-system, Roboto, sans-serif;
+      font-weight: 300; min-height: 100%;
+    }
+    body { padding: 24px 20px 60px; max-width: 560px; margin: 0 auto; }
+    h1 {
+      font-size: 20px; font-weight: 400; text-transform: uppercase;
+      letter-spacing: 3px; color: #ccc;
+      border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 6px;
+    }
+    p.sub { color: #666; font-size: 14px; margin-bottom: 22px; }
+    fieldset { border: none; margin-bottom: 26px; }
+    legend {
+      font-size: 13px; text-transform: uppercase; letter-spacing: 2px;
+      color: #888; margin-bottom: 12px; width: 100%;
+      border-bottom: 1px solid #1e1e1e; padding-bottom: 6px;
+    }
+    label { display: block; font-size: 13px; color: #999; margin: 14px 0 6px; }
+    input[type="text"], input[type="url"], select {
+      width: 100%; background: #161616; border: 1px solid #333;
+      border-radius: 10px; color: #eee; font-size: 17px;
+      padding: 12px 14px; outline: none;
+    }
+    input::placeholder { color: #555; }
+    .radio-row { display: flex; gap: 10px; margin-top: 4px; }
+    .radio-row label {
+      flex: 1; margin: 0; text-align: center; color: #ccc; font-size: 16px;
+      background: #161616; border: 1px solid #333; border-radius: 10px;
+      padding: 12px; cursor: pointer;
+    }
+    .radio-row input { display: none; }
+    .radio-row input:checked + span { color: #fff; font-weight: 400; }
+    .radio-row label:has(input:checked) { border-color: #6a8fb5; background: #1a2230; }
+    .feed-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .feed-row input { flex: 1; }
+    .feed-row button, .add-btn {
+      background: #2a2a2a; border: 1px solid #444; border-radius: 10px;
+      color: #ccc; font-size: 18px; padding: 0 16px; cursor: pointer;
+    }
+    .add-btn { margin-top: 4px; font-size: 15px; padding: 10px 16px; }
+    .hint { font-size: 12px; color: #555; margin-top: 6px; line-height: 1.5; }
+    .hint a { color: #7a9; }
+    .actions {
+      position: sticky; bottom: 0; background: #000;
+      padding: 16px 0 6px; margin-top: 10px; border-top: 1px solid #1e1e1e;
+    }
+    #save {
+      width: 100%; background: #24402c; border: 1px solid #3a6b48;
+      border-radius: 12px; color: #eaffef; font-size: 18px; padding: 15px;
+      cursor: pointer;
+    }
+    #save:active { background: #1d3323; }
+    #msg { text-align: center; font-size: 15px; margin-top: 12px; min-height: 20px; }
+    #msg.ok { color: #7cc48a; }
+    #msg.err { color: #e08a6a; }
+    a.back { color: #777; font-size: 14px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1>Settings</h1>
+  <p class="sub">Changes save straight to the board — no need to edit any files.
+    <a class="back" href="/">← back to board</a></p>
+
+  <form id="form" autocomplete="off">
+    <fieldset>
+      <legend>Weather</legend>
+      <label for="city">City</label>
+      <input id="city" type="text" placeholder="e.g. Limerick">
+      <label>Units</label>
+      <div class="radio-row">
+        <label><input type="radio" name="units" value="metric"><span>°C / km·h</span></label>
+        <label><input type="radio" name="units" value="imperial"><span>°F / mph</span></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Calendar</legend>
+      <label for="calendar">Google Calendar secret iCal link</label>
+      <input id="calendar" type="url" placeholder="https://calendar.google.com/…/basic.ics">
+      <div class="hint" id="cal-hint"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>News feeds</legend>
+      <div id="feeds"></div>
+      <button type="button" class="add-btn" id="add-feed">+ Add a feed</button>
+      <div class="hint">Any RSS feed URL. Open a feed in a browser first to check it shows XML.</div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Cinema</legend>
+      <label for="cinema-provider">Source</label>
+      <select id="cinema-provider">
+        <option value="off">Off (hide cinema)</option>
+        <option value="omniplex">Omniplex</option>
+        <option value="cineworld">Cineworld</option>
+        <option value="manual">Manual (cinema.json)</option>
+      </select>
+      <label for="cinema-venue">Venue</label>
+      <input id="cinema-venue" type="text" placeholder="e.g. limerick">
+      <div class="hint">For Omniplex, the venue is the last part of the web address:
+        omniplex.ie/cinema/<b>limerick</b>.</div>
+      <label for="cinema-name">Heading shown on the board</label>
+      <input id="cinema-name" type="text" placeholder="e.g. Omniplex Limerick">
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit" id="save">Save</button>
+      <div id="msg"></div>
+    </div>
+  </form>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function feedRow(value = "") {
+      const row = document.createElement("div");
+      row.className = "feed-row";
+      const input = document.createElement("input");
+      input.type = "url"; input.value = value; input.placeholder = "https://…/rss.xml";
+      const del = document.createElement("button");
+      del.type = "button"; del.textContent = "✕";
+      del.onclick = () => row.remove();
+      row.append(input, del);
+      return row;
+    }
+
+    async function load() {
+      const cfg = await (await fetch("/api/config")).json();
+      $("city").value = cfg.city || "";
+      document.querySelector(`input[name=units][value="${cfg.units || "metric"}"]`).checked = true;
+      $("cal-hint").innerHTML = cfg.calendarConfigured
+        ? "A calendar is saved. Leave blank to keep it, or paste a new link to replace it."
+        : "In Google Calendar: Settings → your calendar → Integrate calendar → " +
+          "copy “Secret address in iCal format”.";
+      const feeds = $("feeds");
+      feeds.innerHTML = "";
+      (cfg.newsFeeds && cfg.newsFeeds.length ? cfg.newsFeeds : [""]).forEach((f) =>
+        feeds.append(feedRow(f)));
+      $("cinema-provider").value = cfg.cinema.provider || "off";
+      $("cinema-venue").value = cfg.cinema.venue || "";
+      $("cinema-name").value = cfg.cinema.displayName || "";
+    }
+
+    $("add-feed").onclick = () => $("feeds").append(feedRow());
+
+    $("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = $("msg");
+      msg.className = ""; msg.textContent = "Saving…";
+      const payload = {
+        city: $("city").value,
+        units: document.querySelector("input[name=units]:checked").value,
+        calendarIcsUrl: $("calendar").value,
+        newsFeeds: [...document.querySelectorAll("#feeds input")].map((i) => i.value).filter(Boolean),
+        cinema: {
+          provider: $("cinema-provider").value,
+          venue: $("cinema-venue").value,
+          displayName: $("cinema-name").value,
+        },
+      };
+      try {
+        const resp = await fetch("/api/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        msg.className = "ok";
+        msg.textContent = "Saved. The board updates within a few seconds.";
+        $("calendar").value = "";
+        load();
+      } catch (err) {
+        msg.className = "err";
+        msg.textContent = "Couldn't save: " + err.message;
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>
