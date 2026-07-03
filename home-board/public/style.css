@@ -373,3 +373,83 @@ body[data-theme^="pipboy"] #todo-list .todo-text::before {
   content: "> ";
   color: var(--ph-dim);
 }
+
+/* ============================================================
+   Boardy, the bobblehead mascot (bottom-left corner)
+   ============================================================ */
+
+#mascot {
+  position: fixed;
+  left: 46px;
+  bottom: 96px;
+  z-index: 5;
+  --m-line: #97a3b8;
+  --m-fill: #141a26;
+  color: #b9c4d6; /* bubble text */
+}
+body[data-theme^="pipboy"] #mascot {
+  --m-line: var(--ph);
+  --m-fill: rgba(0, 0, 0, 0.35);
+  color: var(--ph);
+}
+
+/* Head bobbles on its neck like a proper bobblehead */
+.m-head {
+  transform-box: fill-box;
+  transform-origin: 50% 96%;
+  animation: m-bob 3.6s ease-in-out infinite;
+}
+@keyframes m-bob {
+  0%, 100% { transform: rotate(-3.5deg); }
+  50%      { transform: rotate(3.5deg); }
+}
+#mascot.excited .m-head {
+  animation: m-wobble 0.4s ease-in-out 4, m-bob 3.6s ease-in-out 1.6s infinite;
+}
+@keyframes m-wobble {
+  0%, 100% { transform: rotate(-9deg); }
+  50%      { transform: rotate(9deg); }
+}
+
+.m-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: m-blink 4.7s infinite;
+}
+@keyframes m-blink {
+  0%, 91%, 100% { transform: scaleY(1); }
+  94%           { transform: scaleY(0.12); }
+}
+
+.m-tip, .m-chest {
+  animation: m-pulse 2.8s ease-in-out infinite;
+}
+@keyframes m-pulse {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}
+
+/* Speech bubble */
+#mascot-bubble {
+  position: absolute;
+  left: 86px;
+  bottom: 118px;
+  width: max-content;
+  max-width: 300px;
+  font-size: 16px;
+  line-height: 1.45;
+  padding: 10px 14px;
+  border: 1px solid var(--m-line);
+  border-radius: 12px 12px 12px 3px;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+#mascot-bubble.show { opacity: 1; transform: translateY(0); }
+body[data-theme^="pipboy"] #mascot-bubble {
+  font-family: inherit;
+  border-radius: 0;
+  text-shadow: 0 0 6px var(--ph-faint);
+}

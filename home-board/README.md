@@ -381,6 +381,17 @@ the Settings page appears without restarting anything. In all themes the
 pixels are never perfectly static (drifting gradient, or the CRT flicker),
 which helps an old always-on LCD avoid image retention.
 
+### Boardy, the mascot
+
+A little bobblehead robot lives in the bottom-left corner: his head bobs,
+he blinks, and every minute or so a speech bubble pops up with a comment
+built from the board's real data — rain coming, how many tasks are left,
+plants gasping for water, what's on at the cinema, or just telling you to
+go to bed. He draws himself in whatever theme is active (phosphor line-art
+in the Pip-Boy themes). Click or tap him for an instant quip. Turn him off
+with the checkbox on the Settings page's Appearance card if he gets on
+your nerves.
+
 ## Customising
 
 - **Layout / colours / sizes** — everything visual is in `public/style.css`.

@@ -101,6 +101,7 @@ async function updateWeather() {
              `<td>${d.max}°</td><td class="min">${d.min}°</td></tr>`;
     });
     document.getElementById("weather-forecast").innerHTML = rows.join("");
+    mascotState.weather = w;
   } catch (err) {
     document.getElementById("weather-details").textContent = `Weather unavailable (${err.message})`;
   }
@@ -156,6 +157,7 @@ async function updatePlants() {
   try {
     const data = await getJSON("/api/plants");
     const due = data.items.filter((p) => p.dueToday || p.overdue);
+    mascotState.plantsDue = due.length;
     if (!due.length) {
       module.hidden = true;
       return;
@@ -234,6 +236,7 @@ async function updateCinema() {
       return;
     }
     films = cinema.films;
+    mascotState.film = films.length ? films[0].title : null;
     if (!films.length) {
       document.getElementById("cinema-film").textContent = "No screenings today";
       document.getElementById("cinema-times").textContent = "";
@@ -275,6 +278,7 @@ function renderTodos() {
     `<span class="todo-text">${escapeHtml(t.text)}</span></li>`
   ).join("");
   document.getElementById("todo-empty").hidden = todos.length > 0;
+  mascotState.todosLeft = todos.filter((t) => !t.done).length;
 }
 
 async function saveTodos() {
@@ -331,6 +335,61 @@ document.addEventListener("mousemove", () => {
   cursorTimer = setTimeout(() => document.body.classList.remove("interactive"), 4000);
 });
 
+/* ---------- Boardy the mascot ---------- */
+/* A little bobblehead in the corner with a speech bubble. Quips are built
+   from whatever the modules last fetched, so he reacts to real data. */
+
+const mascotState = { weather: null, todosLeft: null, plantsDue: 0, film: null };
+let quipIndex = 0;
+
+function buildQuips() {
+  const quips = [];
+  const hour = new Date().getHours();
+  if (hour < 6) quips.push("You should be asleep.");
+  else if (hour < 10) quips.push("Mornin'. Kettle on?");
+  else if (hour < 17) quips.push("Keeping an eye on things.");
+  else if (hour < 22) quips.push("Evenin'. All grand here.");
+  else quips.push("Go to bed soon, yeah?");
+
+  const w = mascotState.weather;
+  if (w) {
+    const today = w.forecast && w.forecast[0];
+    if (today && today.rainChance >= 60) quips.push("Rain on the way. Coat with you.");
+    if (w.temperature <= 3) quips.push("Baltic out there. Wrap up.");
+    if (w.temperature >= 23) quips.push("Roasting today. Mind the sun.");
+    if (w.windSpeed >= 40) quips.push("Wild wind today. Mind the bins.");
+  }
+
+  if (mascotState.todosLeft === 0) quips.push("List cleared. Savage.");
+  else if (mascotState.todosLeft === 1) quips.push("One thing left on the list.");
+  else if (mascotState.todosLeft > 1) quips.push(`${mascotState.todosLeft} things left on the list.`);
+
+  if (mascotState.plantsDue === 1) quips.push("A plant is gasping for water.");
+  else if (mascotState.plantsDue > 1) quips.push("The plants are gasping for water.");
+
+  if (mascotState.film) quips.push(`${mascotState.film} is on at the cinema.`);
+
+  quips.push("All systems grand.");
+  return quips;
+}
+
+function mascotSpeak() {
+  const mascot = document.getElementById("mascot");
+  if (mascot.hidden) return;
+  const bubble = document.getElementById("mascot-bubble");
+  const quips = buildQuips();
+  bubble.textContent = quips[quipIndex % quips.length];
+  quipIndex += 1;
+  bubble.classList.add("show");
+  mascot.classList.add("excited");
+  setTimeout(() => mascot.classList.remove("excited"), 1700);
+  setTimeout(() => bubble.classList.remove("show"), 12 * 1000);
+}
+
+document.getElementById("mascot").addEventListener("click", mascotSpeak);
+setTimeout(mascotSpeak, 5 * 1000);       // first hello shortly after load
+setInterval(mascotSpeak, 50 * 1000);     // then a fresh quip just under the minute
+
 /* ---------- Display mode ---------- */
 /* Applies server-side presentation settings: hides the "add a task" box when
    the board is read-only (changes come from the phone), and switches theme. */
@@ -342,6 +401,7 @@ async function applyDisplayMode() {
       if (form) form.hidden = true;
     }
     document.body.dataset.theme = cfg.theme || "default";
+    document.getElementById("mascot").hidden = cfg.mascot === false;
   } catch { /* default to showing the input */ }
 }
 setInterval(applyDisplayMode, 30 * 1000); // picks up theme changes from Settings

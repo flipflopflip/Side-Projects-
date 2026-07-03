@@ -235,6 +235,12 @@
       </select>
       <div class="hint">The retro terminal themes add scanlines and a CRT glow
         to the big display. The board switches within half a minute of saving.</div>
+      <label class="field-label" for="mascot" style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 18px;">
+        <input type="checkbox" id="mascot" style="width: 18px; height: 18px; accent-color: #7da2c9;">
+        <span style="font-size: 15px; color: var(--text);">Show Boardy, the bobblehead mascot</span>
+      </label>
+      <div class="hint">A little robot in the corner who bobs, blinks, and
+        comments on the weather, your list and the plants.</div>
     </section>
 
     <section class="card">
@@ -353,6 +359,7 @@
     async function load() {
       const cfg = await (await fetch("/api/config")).json();
       $("theme").value = cfg.theme || "default";
+      $("mascot").checked = cfg.mascot !== false;
       $("city").value = cfg.city || "";
       document.querySelector(`input[name=units][value="${cfg.units || "metric"}"]`).checked = true;
 
@@ -397,6 +404,7 @@
       save.textContent = "Saving…";
       const payload = {
         theme: $("theme").value,
+        mascot: $("mascot").checked,
         city: $("city").value,
         units: document.querySelector("input[name=units]:checked").value,
         calendarIcsUrl: $("calendar").value,

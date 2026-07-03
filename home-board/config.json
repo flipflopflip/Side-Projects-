@@ -20,5 +20,6 @@
     "provider": "omniplex",
     "venue": "limerick",
     "displayName": "Omniplex Limerick"
-  }
+  },
+  "mascot": true
 }

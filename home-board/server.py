@@ -615,6 +615,7 @@ def public_config():
         # page (with the password, when required) always can.
         "displayEditable": display_can_write(),
         "theme": CONFIG.get("theme", "default"),
+        "mascot": bool(CONFIG.get("mascot", True)),
     }
 
 
@@ -656,6 +657,7 @@ def save_config(incoming):
 
     theme = incoming.get("theme", CONFIG.get("theme", "default"))
     new["theme"] = theme if theme in THEMES else "default"
+    new["mascot"] = bool(incoming.get("mascot", CONFIG.get("mascot", True)))
 
     feeds = [_clean_url(u) for u in incoming.get("newsFeeds", []) if str(u).strip()]
     new["newsFeeds"] = feeds
