@@ -619,7 +619,7 @@ def public_config():
     }
 
 
-THEMES = ("default", "pipboy", "pipboy-amber")
+THEMES = ("default", "light", "pipboy", "pipboy-amber")
 
 
 def display_can_write():

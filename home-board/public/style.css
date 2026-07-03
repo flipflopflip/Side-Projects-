@@ -462,3 +462,79 @@ body[data-theme^="pipboy"] #mascot-bubble {
   border-radius: 0;
   text-shadow: 0 0 6px var(--ph-faint);
 }
+
+/* ============================================================
+   Light theme — dark text on a soft paper background, for
+   daytime readability in a bright room. Selected on the
+   Settings page (data-theme="light").
+   ============================================================ */
+
+body[data-theme="light"] {
+  background: linear-gradient(160deg, #eef2f7 0%, #dfe6f0 100%);
+  color: #222b36;
+}
+
+/* Data / primary text */
+body[data-theme="light"] .cal-event,
+body[data-theme="light"] #plants-list li,
+body[data-theme="light"] #weather-forecast,
+body[data-theme="light"] #todo-list li,
+body[data-theme="light"] #cinema-film,
+body[data-theme="light"] #news-headline,
+body[data-theme="light"] #clock .time,
+body[data-theme="light"] .weather-temp,
+body[data-theme="light"] #weather-details {
+  color: #222b36;
+}
+
+/* Labels / secondary text */
+body[data-theme="light"] .dimmed,
+body[data-theme="light"] .module h2,
+body[data-theme="light"] .module-header,
+body[data-theme="light"] #clock .date,
+body[data-theme="light"] .cal-event .cal-time,
+body[data-theme="light"] #plants-list .plant-status,
+body[data-theme="light"] #weather-forecast td:first-child {
+  color: #566173;
+}
+
+/* Faint text */
+body[data-theme="light"] #clock .seconds,
+body[data-theme="light"] .cal-day,
+body[data-theme="light"] #weather-forecast .min,
+body[data-theme="light"] #todo-list button {
+  color: #93a0b1;
+}
+
+/* Struck-through / done */
+body[data-theme="light"] #todo-list li.done span.todo-text {
+  color: #a4adba;
+}
+
+/* Dividers */
+body[data-theme="light"] .module h2,
+body[data-theme="light"] .module-header {
+  border-bottom-color: #cbd4e0;
+}
+body[data-theme="light"] #todo-form input {
+  border-bottom-color: #cbd4e0;
+  color: #222b36;
+}
+body[data-theme="light"] #todo-form input::placeholder { color: #a4adba; }
+
+/* Accents */
+body[data-theme="light"] #weather-forecast .rain { color: #35699f; }
+body[data-theme="light"] #plants-list li.overdue .plant-name,
+body[data-theme="light"] #plants-list li.overdue .plant-status { color: #c1552e; }
+
+/* Mascot: dark line-art robot, speech bubble as a light card */
+body[data-theme="light"] #mascot {
+  color: #2a3340;
+  --m-line: #3a4453;
+  --m-fill: #ffffff;
+}
+body[data-theme="light"] #mascot-bubble {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: #c2cad6;
+  color: #2a3340;
+}

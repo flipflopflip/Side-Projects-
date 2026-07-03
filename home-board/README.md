@@ -363,18 +363,21 @@ once the connection is back.
 
 ## Look & feel
 
-There are three themes, switchable from the **Settings page** (Appearance
+There are four themes, switchable from the **Settings page** (Appearance
 card) or with `"theme"` in `config.json`:
 
-- **`pipboy-amber`** (the default) — a Fallout: New Vegas-style amber
-  phosphor terminal: monospace type, glowing text, scanlines, CRT vignette,
-  inverse-video section headers and `>` prompts on the to-do list.
+- **`light`** (the default) — dark text on a soft, bright background. The
+  most readable option in a well-lit room during the day.
+- **`default`** — a modern dark look with a soft gradient that drifts
+  through the day on its own: warm amber tones around dawn, cool slate-blue
+  at midday, indigo in the evening, and near-black (with slightly dimmed
+  text) at night. To tweak its palette, edit the `AMBIENCE_STOPS` table near
+  the top of `public/main.js` (each row is
+  `[hour, topColour, bottomColour, brightness]`).
+- **`pipboy-amber`** — a Fallout: New Vegas-style amber phosphor terminal:
+  monospace type, glowing text, scanlines, CRT vignette, inverse-video
+  section headers and `>` prompts on the to-do list.
 - **`pipboy`** — the same, in classic Pip-Boy green.
-- **`default`** — a modern look with a soft gradient that drifts through the
-  day on its own: warm amber tones around dawn, cool slate-blue at midday,
-  indigo in the evening, and near-black (with slightly dimmed text) at night.
-  To tweak its palette, edit the `AMBIENCE_STOPS` table near the top of
-  `public/main.js` (each row is `[hour, topColour, bottomColour, brightness]`).
 
 The display checks for a theme change every 30 seconds, so a switch saved on
 the Settings page appears without restarting anything. In all themes the
