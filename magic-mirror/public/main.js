@@ -4,7 +4,9 @@ const REFRESH = {
   weather: 15 * 60 * 1000,
   news: 10 * 60 * 1000,
   calendar: 10 * 60 * 1000,
+  cinema: 3 * 3600 * 1000,
   headlineRotate: 10 * 1000,
+  filmRotate: 5 * 1000,
 };
 
 async function getJSON(url) {
@@ -124,6 +126,53 @@ function rotateHeadline() {
   }, 600);
 }
 
+/* ---------- Cinema ---------- */
+
+let films = [];
+let filmIndex = 0;
+
+async function updateCinema() {
+  const module = document.getElementById("cinema-module");
+  try {
+    const cinema = await getJSON("/api/cinema");
+    if (!cinema.configured && !cinema.hint) {
+      module.hidden = true; // provider "off"
+      return;
+    }
+    module.hidden = false;
+    document.getElementById("cinema-name").textContent = cinema.cinemaName || "Cinema";
+    if (!cinema.configured) {
+      films = [];
+      document.getElementById("cinema-film").textContent = cinema.hint;
+      document.getElementById("cinema-times").textContent = "";
+      return;
+    }
+    films = cinema.films;
+    if (!films.length) {
+      document.getElementById("cinema-film").textContent = "No screenings today";
+      document.getElementById("cinema-times").textContent = "";
+    }
+  } catch (err) {
+    module.hidden = false;
+    films = [];
+    document.getElementById("cinema-film").textContent = "Listings unavailable";
+    document.getElementById("cinema-times").textContent = err.message;
+  }
+}
+
+function rotateFilm() {
+  if (!films.length) return;
+  const rotator = document.getElementById("cinema-rotator");
+  rotator.classList.add("fading");
+  setTimeout(() => {
+    const film = films[filmIndex % films.length];
+    filmIndex += 1;
+    document.getElementById("cinema-film").textContent = film.title;
+    document.getElementById("cinema-times").textContent = film.times.join("  ·  ");
+    rotator.classList.remove("fading");
+  }, 500);
+}
+
 /* ---------- To-do list ---------- */
 
 let todos = [];
@@ -202,8 +251,11 @@ updateWeather();
 updateCalendar();
 loadTodos();
 updateNews().then(rotateHeadline);
+updateCinema().then(rotateFilm);
 
 setInterval(updateWeather, REFRESH.weather);
 setInterval(updateCalendar, REFRESH.calendar);
 setInterval(updateNews, REFRESH.news);
+setInterval(updateCinema, REFRESH.cinema);
 setInterval(rotateHeadline, REFRESH.headlineRotate);
+setInterval(rotateFilm, REFRESH.filmRotate);

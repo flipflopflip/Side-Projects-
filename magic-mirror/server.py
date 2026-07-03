@@ -345,6 +345,142 @@ def get_calendar():
 
 
 # ---------------------------------------------------------------------------
+# Cinema listings
+# ---------------------------------------------------------------------------
+# provider "cineworld": today's films + showtimes from Cineworld's public
+#   listings API (works for cineworld.ie and cineworld.co.uk sites).
+# provider "manual": read from cinema.json next to this file, so any cinema
+#   can be shown by typing its listings in.
+
+CINEWORLD = {
+    "ie": ("https://www.cineworld.ie/ie", "10105"),
+    "uk": ("https://www.cineworld.co.uk/uk", "10108"),
+}
+
+CINEMA_FILE = BASE_DIR / "cinema.json"
+
+
+def cineworld_cinemas(region):
+    base, tenant = CINEWORLD[region]
+    until = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+    url = f"{base}/data-api-service/v1/quickbook/{tenant}/cinemas/with-event/until/{until}"
+    data = json.loads(http_get(url, timeout=20))
+    return [{"id": c["id"], "name": c["displayName"]}
+            for c in data.get("body", {}).get("cinemas", [])]
+
+
+def cineworld_listings(region, cinema_id):
+    base, tenant = CINEWORLD[region]
+    today = datetime.now().strftime("%Y-%m-%d")
+    url = (f"{base}/data-api-service/v1/quickbook/{tenant}"
+           f"/film-events/in-cinema/{cinema_id}/at-date/{today}")
+    data = json.loads(http_get(url, timeout=20)).get("body", {})
+    names = {f["id"]: f for f in data.get("films", [])}
+    times = {}
+    for event in data.get("events", []):
+        stamp = event.get("eventDateTime", "")
+        if "T" in stamp:
+            times.setdefault(event.get("filmId"), []).append(stamp.split("T")[1][:5])
+    films = []
+    for film_id, showtimes in times.items():
+        film = names.get(film_id, {})
+        films.append({
+            "title": film.get("name", "Unknown film"),
+            "runtime": film.get("length"),
+            "times": sorted(showtimes),
+        })
+    films.sort(key=lambda f: f["times"][0])
+    return films
+
+
+def omniplex_listings(venue):
+    """Parse today's films from an omniplex.ie cinema page.
+
+    The page embeds schema.org JSON-LD (ScreeningEvent) blocks for search
+    engines; that is far more stable than scraping the visible HTML.
+    """
+    url = f"https://www.omniplex.ie/cinema/{venue}"
+    html = http_get(url, timeout=20).decode("utf-8", errors="replace")
+    today = datetime.now().date()
+    films = {}
+    for block in re.findall(
+            r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
+            html, re.S):
+        try:
+            data = json.loads(block.strip())
+        except json.JSONDecodeError:
+            continue
+        items = data if isinstance(data, list) else [data]
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            graph = item.get("@graph", [item])
+            for node in graph:
+                if not isinstance(node, dict):
+                    continue
+                if node.get("@type") not in ("ScreeningEvent", "Event"):
+                    continue
+                start = node.get("startDate", "")
+                work = node.get("workPresented") or {}
+                title = (work.get("name") if isinstance(work, dict)
+                         else None) or node.get("name", "")
+                if not (title and start[:10] == today.isoformat() and "T" in start):
+                    continue
+                films.setdefault(title, set()).add(start.split("T")[1][:5])
+    result = [{"title": t, "times": sorted(ts)} for t, ts in films.items()]
+    if not result:
+        raise ValueError(
+            "No listings found in the page — Omniplex may have blocked the "
+            "request or changed their site; try provider \"manual\"")
+    result.sort(key=lambda f: f["times"][0])
+    return result
+
+
+def get_cinema():
+    cfg = CONFIG.get("cinema", {})
+    provider = cfg.get("provider", "off")
+    if provider == "off":
+        return {"configured": False, "films": []}
+
+    if provider == "omniplex":
+        venue = cfg.get("venue", "")
+        if not venue:
+            return {"configured": False, "films": [],
+                    "hint": 'Set cinema.venue, e.g. "limerick" for '
+                            'omniplex.ie/cinema/limerick'}
+        return {"configured": True,
+                "cinemaName": cfg.get("displayName", f"Omniplex {venue.title()}"),
+                "films": omniplex_listings(venue)}
+
+    if provider == "manual":
+        if not CINEMA_FILE.exists():
+            return {"configured": False, "films": [],
+                    "hint": "Create cinema.json — see the README"}
+        data = json.loads(CINEMA_FILE.read_text(encoding="utf-8"))
+        return {"configured": True,
+                "cinemaName": data.get("cinemaName", "Cinema"),
+                "films": data.get("films", [])}
+
+    if provider == "cineworld":
+        region = cfg.get("region", "ie")
+        if region not in CINEWORLD:
+            return {"configured": False, "films": [],
+                    "hint": 'cinema.region must be "ie" or "uk"'}
+        cinema_id = str(cfg.get("cinemaId", "") or "")
+        if not cinema_id:
+            # Help the user pick: return the list of cinemas and their ids.
+            return {"configured": False, "films": [],
+                    "hint": "Set cinema.cinemaId in config.json to one of these:",
+                    "availableCinemas": cineworld_cinemas(region)}
+        return {"configured": True,
+                "cinemaName": cfg.get("displayName", "Cineworld"),
+                "films": cineworld_listings(region, cinema_id)}
+
+    return {"configured": False, "films": [],
+            "hint": f"Unknown cinema provider {provider!r}"}
+
+
+# ---------------------------------------------------------------------------
 # To-do list (persisted to todo.json)
 # ---------------------------------------------------------------------------
 
@@ -393,6 +529,8 @@ class MirrorHandler(SimpleHTTPRequestHandler):
             self.handle_api(get_news, ttl=10 * 60)
         elif self.path == "/api/calendar":
             self.handle_api(get_calendar, ttl=10 * 60)
+        elif self.path == "/api/cinema":
+            self.handle_api(get_cinema, ttl=3 * 3600)
         elif self.path == "/api/todos":
             self.send_json({"items": get_todos()})
         else:

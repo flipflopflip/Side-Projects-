@@ -165,6 +165,23 @@ html, body {
 }
 #todo-form input::placeholder { color: #444; }
 
+/* ---- Cinema ---- */
+#cinema-rotator { transition: opacity 0.5s ease; }
+#cinema-rotator.fading { opacity: 0; }
+#cinema-film {
+  font-size: 28px;
+  font-weight: 300;
+  color: #eee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#cinema-times {
+  font-size: 19px;
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
 /* ---- News ticker ---- */
 #news-source { font-size: 15px; text-transform: uppercase; letter-spacing: 2px; }
 #news-headline {

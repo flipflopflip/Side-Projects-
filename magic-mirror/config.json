@@ -11,5 +11,10 @@
   ],
   "headlinesPerFeed": 6,
   "calendarIcsUrl": "",
-  "maxCalendarDays": 14
+  "maxCalendarDays": 14,
+  "cinema": {
+    "provider": "omniplex",
+    "venue": "limerick",
+    "displayName": "Omniplex Limerick"
+  }
 }

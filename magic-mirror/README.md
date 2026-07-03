@@ -14,6 +14,7 @@ plus a plain HTML/CSS/JS page, so it runs happily on old hardware.
 | News | RSS feeds — RTÉ News, The Economist and Bloomberg by default |
 | Calendar | Any iCal (`.ics`) link — Google Calendar, Outlook or iCloud |
 | To-do list | Stored on the laptop in `todo.json`; add tasks right on the mirror |
+| Cinema | Today's films & showtimes at your local cinema (Omniplex Limerick by default), one film at a time, rotating every 5 seconds |
 
 ---
 
@@ -37,7 +38,12 @@ You never need to touch the code. **Every setting lives in
   ],
   "headlinesPerFeed": 6,
   "calendarIcsUrl": "",
-  "maxCalendarDays": 14
+  "maxCalendarDays": 14,
+  "cinema": {
+    "provider": "omniplex",
+    "venue": "limerick",
+    "displayName": "Omniplex Limerick"
+  }
 }
 ```
 
@@ -49,6 +55,7 @@ You never need to touch the code. **Every setting lives in
 | `headlinesPerFeed` | How many headlines to rotate per feed | A number, e.g. `6` |
 | `calendarIcsUrl` | Your calendar | Your calendar's secret iCal link — see [Calendar](#-connecting-your-google-calendar) below |
 | `maxCalendarDays` | How far ahead the calendar looks | A number of days, e.g. `14` |
+| `cinema` | Local cinema listings | See [Cinema listings](#-cinema-listings) below |
 | `port` | Local address of the dashboard | Leave as `8480` unless something else uses it |
 
 ⚠️ **JSON is picky.** Keep the quotes, and note the commas: every line has a
@@ -130,6 +137,48 @@ last one:
   "https://feeds.bloomberg.com/technology/news.rss"
 ],
 ```
+
+---
+
+## 🎬 Cinema listings
+
+The mirror shows **today's films at your cinema, one at a time, rotating
+every 5 seconds** with the showtimes underneath. Three providers, chosen by
+`cinema.provider` in `config.json`:
+
+**`"omniplex"` (default)** — reads the listings from an omniplex.ie cinema
+page. `venue` is the last part of the cinema's web address: for
+`omniplex.ie/cinema/limerick` it's `"limerick"`. `displayName` is just the
+heading shown on the mirror.
+
+**`"cineworld"`** — for Cineworld cinemas (Ireland & UK). Set
+`"region": "ie"` or `"uk"` and a `cinemaId`. Don't know the id? Leave
+`cinemaId` empty, start the mirror, and open
+<http://localhost:8480/api/cinema> — it lists every cinema with its id.
+
+```json
+"cinema": { "provider": "cineworld", "region": "ie", "cinemaId": "8112" }
+```
+
+**`"manual"`** — works for any cinema: create a file called `cinema.json`
+next to `server.py` and type in what's on:
+
+```json
+{
+  "cinemaName": "My Local Cinema",
+  "films": [
+    { "title": "Dune: Part Three", "times": ["14:20", "17:40", "21:00"] },
+    { "title": "The Grand Tour", "times": ["16:10", "19:30"] }
+  ]
+}
+```
+
+Set `"provider": "off"` to hide the module entirely.
+
+⚠️ *Heads-up:* the Omniplex website sometimes blocks automated requests. If
+the mirror says "Listings unavailable", open
+<http://localhost:8480/api/cinema> to see the exact error — and worst case,
+switch to `"manual"` mode.
 
 ---
 
