@@ -19,7 +19,7 @@ plus a plain HTML/CSS/JS page, so it runs happily on old hardware.
 
 ---
 
-## ⚙️ Configuration — everything is in ONE file: `config.json`
+## Configuration — everything is in ONE file: `config.json`
 
 You never need to touch the code. **Every setting lives in
 `home-board/config.json`.** Open it by right-clicking the file →
@@ -60,7 +60,7 @@ You never need to touch the code. **Every setting lives in
 | `port` | Local address of the dashboard | Leave as `8480` unless something else uses it |
 | `lanAccess` | Phone access on home Wi-Fi | `true` (default) or `false` — see [phone access](#-updating-the-to-do-list-from-your-phone) |
 
-⚠️ **JSON is picky.** Keep the quotes, and note the commas: every line has a
+**JSON is picky.** Keep the quotes, and note the commas: every line has a
 comma after it *except the last one inside each `{ }` or `[ ]`*. If the
 display won't start after an edit, you've probably lost a comma or a quote —
 paste the file into <https://jsonlint.com> to see exactly where.
@@ -70,7 +70,7 @@ After changing `config.json`, restart Home Board (`stop_home_board.bat`, then
 
 ---
 
-## 📅 Connecting your Google Calendar
+## Connecting your Google Calendar
 
 You need your calendar's **"Secret address in iCal format"** — a private URL
 that lets it read your events without any login or API key.
@@ -92,7 +92,7 @@ that lets it read your events without any login or API key.
 
 7. Restart it. Your next two weeks of events appear under the clock.
 
-🔒 **Keep that URL private** — anyone who has it can read your calendar.
+**Keep that URL private** — anyone who has it can read your calendar.
 (If it ever leaks, the same Google settings page has a "Reset" button that
 invalidates the old link.) Don't push a `config.json` containing it to a
 public GitHub repo.
@@ -105,7 +105,7 @@ public GitHub repo.
 
 ---
 
-## 📰 News feeds
+## News feeds
 
 `newsFeeds` is a list of RSS feed URLs. It grabs the top headlines
 from each and rotates through them at the bottom of the screen. The defaults
@@ -142,7 +142,7 @@ last one:
 
 ---
 
-## 📱 Updating the to-do list (and plants) from your phone
+## Updating the to-do list (and plants) from your phone
 
 Home Board serves a phone-friendly page to every device on your home
 Wi-Fi, with both the to-do list and the plant watering list on it. Anything
@@ -185,7 +185,7 @@ Notes:
 
 ---
 
-## 🎬 Cinema listings
+## Cinema listings
 
 Home Board shows **today's films at your cinema, one at a time, rotating
 every 5 seconds** with the showtimes underneath. Three providers, chosen by
@@ -220,14 +220,14 @@ next to `server.py` and type in what's on:
 
 Set `"provider": "off"` to hide the module entirely.
 
-⚠️ *Heads-up:* the Omniplex website sometimes blocks automated requests. If
+*Heads-up:* the Omniplex website sometimes blocks automated requests. If
 it says "Listings unavailable", open
 <http://localhost:8480/api/cinema> to see the exact error — and worst case,
 switch to `"manual"` mode.
 
 ---
 
-## 🚀 Setup on the laptop (one time, ~10 minutes)
+## Setup on the laptop (one time, ~10 minutes)
 
 ### 1. Install Python
 
