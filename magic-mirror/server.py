@@ -45,7 +45,12 @@ def cached(key, ttl_seconds, producer):
 
 
 def http_get(url, timeout=15):
-    req = Request(url, headers={"User-Agent": "MagicMirrorLite/1.0"})
+    # Some news CDNs (e.g. Bloomberg's) reject requests without a
+    # browser-like User-Agent, so send one.
+    req = Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) MagicMirrorLite/1.0",
+        "Accept": "*/*",
+    })
     with urlopen(req, timeout=timeout) as resp:
         return resp.read()
 

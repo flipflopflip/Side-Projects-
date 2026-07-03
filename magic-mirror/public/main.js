@@ -139,6 +139,7 @@ function renderTodos() {
     `<button title="Remove" data-remove="${i}">✕</button>` +
     `<span class="todo-text">${escapeHtml(t.text)}</span></li>`
   ).join("");
+  document.getElementById("todo-empty").hidden = todos.length > 0;
 }
 
 async function saveTodos() {

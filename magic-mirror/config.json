@@ -5,8 +5,9 @@
   "longitude": null,
   "units": "metric",
   "newsFeeds": [
-    "https://feeds.bbci.co.uk/news/world/rss.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+    "https://www.rte.ie/feeds/rss/?index=/news/",
+    "https://www.economist.com/latest/rss.xml",
+    "https://feeds.bloomberg.com/markets/news.rss"
   ],
   "headlinesPerFeed": 6,
   "calendarIcsUrl": "",

@@ -16,15 +16,16 @@ html, body {
   height: 100vh;
   padding: 40px 50px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.1fr 1fr;
   grid-template-rows: 1fr auto;
   grid-template-areas:
-    "left  right"
-    "bottom bottom";
+    "left  center right"
+    "bottom bottom bottom";
   gap: 30px;
 }
 
 .top-left  { grid-area: left; }
+.center    { grid-area: center; display: flex; align-items: center; justify-content: center; }
 .top-right { grid-area: right; text-align: right; }
 .bottom    { grid-area: bottom; text-align: center; padding-bottom: 10px; }
 
@@ -112,43 +113,55 @@ html, body {
 #weather-forecast .min { color: #777; }
 #weather-forecast .rain { color: #6aa5c8; font-size: 15px; }
 
-/* ---- To do ---- */
-#todo-list { list-style: none; max-width: 420px; margin-left: auto; }
+/* ---- To do (the centrepiece) ---- */
+#todo-module {
+  margin-top: 0;
+  width: 100%;
+  max-width: 560px;
+  text-align: center;
+}
+#todo-module h2 {
+  font-size: 26px;
+  text-align: center;
+}
+#todo-list { list-style: none; }
 #todo-list li {
-  font-size: 19px;
-  padding: 4px 0;
-  color: #ddd;
+  font-size: 30px;
+  font-weight: 300;
+  padding: 8px 0;
+  color: #eee;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 #todo-list li.done span.todo-text {
   text-decoration: line-through;
-  color: #666;
+  color: #555;
 }
 #todo-list .todo-text { cursor: default; }
 #todo-list button {
   background: none;
   border: none;
   color: #555;
-  font-size: 17px;
+  font-size: 22px;
   cursor: pointer;
   visibility: hidden;
 }
 #todo-list li:hover button { visibility: visible; }
+#todo-empty { font-size: 26px; padding: 10px 0; }
 
 #todo-form input {
-  margin-top: 10px;
-  width: 320px;
+  margin-top: 22px;
+  width: 360px;
   background: transparent;
   border: none;
   border-bottom: 1px solid #333;
   color: #bbb;
-  font-size: 16px;
-  padding: 5px 2px;
+  font-size: 18px;
+  padding: 6px 2px;
   outline: none;
-  text-align: right;
+  text-align: center;
 }
 #todo-form input::placeholder { color: #444; }
 

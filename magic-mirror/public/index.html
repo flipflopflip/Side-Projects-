@@ -21,6 +21,17 @@
       </div>
     </section>
 
+    <section class="region center">
+      <div class="module" id="todo-module">
+        <h2>Today</h2>
+        <ul id="todo-list"></ul>
+        <div id="todo-empty" class="dimmed" hidden>Nothing to do 🎉</div>
+        <form id="todo-form" autocomplete="off">
+          <input id="todo-input" type="text" placeholder="Add a task and press Enter" maxlength="200">
+        </form>
+      </div>
+    </section>
+
     <section class="region top-right">
       <div class="module" id="weather-module">
         <div id="weather-location" class="module-header">&nbsp;</div>
@@ -30,14 +41,6 @@
         </div>
         <div id="weather-details" class="dimmed"></div>
         <table id="weather-forecast"></table>
-      </div>
-
-      <div class="module" id="todo-module">
-        <h2>To Do</h2>
-        <ul id="todo-list"></ul>
-        <form id="todo-form" autocomplete="off">
-          <input id="todo-input" type="text" placeholder="Add a task and press Enter" maxlength="200">
-        </form>
       </div>
     </section>
 
