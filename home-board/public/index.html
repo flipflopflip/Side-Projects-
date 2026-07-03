@@ -66,36 +66,41 @@
 
   <div id="mascot" hidden>
     <div id="mascot-bubble"></div>
-    <svg viewBox="0 0 120 140" width="120" height="140" aria-hidden="true">
-      <!-- plinth -->
-      <ellipse class="m-fill" cx="60" cy="131" rx="27" ry="6"
-               stroke="var(--m-line)" fill="var(--m-fill)" stroke-width="2.5"/>
+    <svg viewBox="0 0 120 150" width="120" height="150" aria-hidden="true">
+      <!-- base -->
+      <g stroke="var(--m-line)" fill="var(--m-fill)" stroke-width="2.5" stroke-linecap="round">
+        <ellipse cx="60" cy="139" rx="28" ry="6"/>
+      </g>
       <!-- body -->
       <g stroke="var(--m-line)" fill="var(--m-fill)" stroke-width="2.5" stroke-linecap="round">
-        <rect x="40" y="94" width="40" height="32" rx="9"/>
+        <rect x="40" y="100" width="40" height="32" rx="12"/>
+        <!-- chest light slit -->
+        <rect class="m-chest" x="52" y="110" width="16" height="5" rx="2.5"
+              fill="var(--m-glow)" stroke="none"/>
         <!-- left arm resting -->
-        <path d="M40 102 Q28 108 30 118" fill="none"/>
+        <path d="M40 108 Q26 114 28 124" fill="none"/>
         <!-- right arm: thumbs up -->
-        <path d="M80 104 Q94 100 96 90" fill="none"/>
-        <path d="M96 90 l0 -7 M96 90 l6 -3" fill="none"/>
-        <!-- chest light -->
-        <circle class="m-chest" cx="60" cy="108" r="4"/>
+        <path d="M80 108 Q93 104 95 92" fill="none"/>
+        <path d="M95 92 l-1 -8 M95 92 l7 -4" fill="none"/>
+        <!-- spring neck: the bobble mechanism -->
+        <path d="M52 99 q8 -5 16 0 M52 94 q8 -5 16 0" fill="none"/>
       </g>
-      <!-- head (bobbles) -->
+      <!-- head (bobbles on the spring) -->
       <g class="m-head" stroke="var(--m-line)" fill="var(--m-fill)" stroke-width="2.5" stroke-linecap="round">
-        <rect x="54" y="82" width="12" height="12"/>
-        <rect x="24" y="20" width="72" height="62" rx="16"/>
-        <!-- ears -->
-        <rect x="17" y="44" width="7" height="14" rx="2"/>
-        <rect x="96" y="44" width="7" height="14" rx="2"/>
-        <!-- antenna -->
-        <line x1="60" y1="20" x2="60" y2="9"/>
-        <circle class="m-tip" cx="60" cy="6" r="3.5"/>
-        <!-- eyes -->
-        <circle class="m-eye" cx="45" cy="49" r="5.5" fill="var(--m-line)" stroke="none"/>
-        <circle class="m-eye" cx="75" cy="49" r="5.5" fill="var(--m-line)" stroke="none"/>
-        <!-- smile -->
-        <path class="m-mouth" d="M44 65 Q60 74 76 65" fill="none"/>
+        <rect x="22" y="18" width="76" height="66" rx="22"/>
+        <!-- ear pods -->
+        <rect x="15" y="42" width="7" height="18" rx="3.5"/>
+        <rect x="98" y="42" width="7" height="18" rx="3.5"/>
+        <!-- angled antenna -->
+        <line x1="84" y1="20" x2="92" y2="8"/>
+        <circle class="m-tip" cx="93" cy="6" r="3.5" fill="var(--m-glow)" stroke="none"/>
+        <!-- visor -->
+        <rect x="31" y="34" width="58" height="32" rx="15" fill="var(--m-visor)" stroke="none"/>
+        <!-- glowing eyes -->
+        <rect class="m-eye" x="43" y="42" width="9" height="15" rx="4.5"
+              fill="var(--m-glow)" stroke="none"/>
+        <rect class="m-eye" x="68" y="42" width="9" height="15" rx="4.5"
+              fill="var(--m-glow)" stroke="none"/>
       </g>
     </svg>
   </div>

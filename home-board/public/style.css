@@ -385,11 +385,15 @@ body[data-theme^="pipboy"] #todo-list .todo-text::before {
   z-index: 5;
   --m-line: #97a3b8;
   --m-fill: #141a26;
+  --m-visor: #0c1119;
+  --m-glow: #8fd8ee;
   color: #b9c4d6; /* bubble text */
 }
 body[data-theme^="pipboy"] #mascot {
   --m-line: var(--ph);
   --m-fill: rgba(0, 0, 0, 0.35);
+  --m-visor: rgba(0, 0, 0, 0.55);
+  --m-glow: var(--ph);
   color: var(--ph);
 }
 
@@ -415,6 +419,7 @@ body[data-theme^="pipboy"] #mascot {
   transform-box: fill-box;
   transform-origin: center;
   animation: m-blink 4.7s infinite;
+  filter: drop-shadow(0 0 3px var(--m-glow));
 }
 @keyframes m-blink {
   0%, 91%, 100% { transform: scaleY(1); }
@@ -429,13 +434,13 @@ body[data-theme^="pipboy"] #mascot {
   50%      { opacity: 1; }
 }
 
-/* Sleepy after 11pm: heavy lids, slower nod, smaller smile */
+/* Sleepy after 11pm: heavy lids, dimmed glow, slower nod */
 #mascot.sleepy .m-head { animation-duration: 6.5s; }
 #mascot.sleepy .m-eye {
   animation: none;
-  transform: scaleY(0.4);
+  transform: scaleY(0.35);
+  opacity: 0.75;
 }
-#mascot.sleepy .m-mouth { d: path("M47 67 Q60 71 73 67"); }
 #mascot.sleepy .m-tip, #mascot.sleepy .m-chest { animation-duration: 5s; }
 
 /* Speech bubble */
@@ -527,11 +532,13 @@ body[data-theme="light"] #weather-forecast .rain { color: #35699f; }
 body[data-theme="light"] #plants-list li.overdue .plant-name,
 body[data-theme="light"] #plants-list li.overdue .plant-status { color: #c1552e; }
 
-/* Mascot: dark line-art robot, speech bubble as a light card */
+/* Mascot: dark line-art robot with a dark visor, bubble as a light card */
 body[data-theme="light"] #mascot {
   color: #2a3340;
   --m-line: #3a4453;
   --m-fill: #ffffff;
+  --m-visor: #222c3d;
+  --m-glow: #9fd0ff;
 }
 body[data-theme="light"] #mascot-bubble {
   background: rgba(255, 255, 255, 0.92);
