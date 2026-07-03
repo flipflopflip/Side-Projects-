@@ -15,6 +15,7 @@ plus a plain HTML/CSS/JS page, so it runs happily on old hardware.
 | Calendar | Any iCal (`.ics`) link — Google Calendar, Outlook or iCloud |
 | To-do list | Stored on the laptop in `todo.json`; add tasks right on the display |
 | Cinema | Today's films & showtimes at your local cinema (Omniplex Limerick by default), one film at a time, rotating every 5 seconds |
+| Plant watering | A "Water Today" reminder for any plants that are due or overdue; manage the list and tap to mark watered from your phone |
 
 ---
 
@@ -141,11 +142,12 @@ last one:
 
 ---
 
-## 📱 Updating the to-do list from your phone
+## 📱 Updating the to-do list (and plants) from your phone
 
-Home Board serves a phone-friendly to-do page to every device on your home
-Wi-Fi. Anything you tick off or add on your phone appears on the display
-within a few seconds (and vice versa).
+Home Board serves a phone-friendly page to every device on your home
+Wi-Fi, with both the to-do list and the plant watering list on it. Anything
+you tick off or add on your phone appears on the display within a few
+seconds (and vice versa).
 
 1. Start Home Board. The server prints the address to use, e.g.
    `On your phone (same Wi-Fi): http://192.168.1.23:8480/todo`
@@ -158,6 +160,15 @@ within a few seconds (and vice versa).
    ✕ to remove it, and use the box at the bottom to add one.
 4. To make it feel like an app: in Safari/Chrome on the phone, use
    **Share → Add to Home Screen**. One tap from then on.
+
+### Plants
+
+Scroll down on the same phone page to **Plants**. Type a plant's name and
+how often it needs water (in days), and tap ＋. The display's "Water Today"
+module (under the calendar) only shows plants that are due or overdue today
+— tap a plant there, or on the phone, to mark it watered, which resets its
+clock. Nothing shows on the display until a plant is actually due, so an
+empty watering list won't clutter the screen.
 
 Give the laptop a **fixed IP** (or use its computer name, e.g.
 `http://my-laptop:8480/todo`) so the address never changes — most routers

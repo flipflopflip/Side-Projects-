@@ -5,6 +5,7 @@ const REFRESH = {
   news: 10 * 60 * 1000,
   calendar: 10 * 60 * 1000,
   cinema: 3 * 3600 * 1000,
+  plants: 10 * 60 * 1000,
   todos: 5 * 1000, // picks up edits made from a phone via /todo
   headlineRotate: 10 * 1000,
   filmRotate: 5 * 1000,
@@ -99,6 +100,42 @@ async function updateCalendar() {
     el.textContent = `Calendar unavailable (${err.message})`;
   }
 }
+
+/* ---------- Plants ---------- */
+
+async function updatePlants() {
+  const module = document.getElementById("plants-module");
+  try {
+    const data = await getJSON("/api/plants");
+    const due = data.items.filter((p) => p.dueToday || p.overdue);
+    if (!due.length) {
+      module.hidden = true;
+      return;
+    }
+    module.hidden = false;
+    document.getElementById("plants-list").innerHTML = due.map((p) => {
+      const status = p.overdue
+        ? `${Math.abs(p.dueInDays)}d overdue`
+        : "today";
+      return `<li class="${p.overdue ? "overdue" : ""}" data-index="${p.index}">` +
+        `<span class="plant-name">${escapeHtml(p.name)}</span>` +
+        `<span class="plant-status">${status}</span></li>`;
+    }).join("");
+  } catch {
+    module.hidden = true;
+  }
+}
+
+document.getElementById("plants-list").addEventListener("click", async (e) => {
+  const li = e.target.closest("li");
+  if (!li) return;
+  await fetch("/api/plants/water", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ index: Number(li.dataset.index) }),
+  });
+  updatePlants();
+});
 
 /* ---------- News ---------- */
 
@@ -250,12 +287,14 @@ document.addEventListener("mousemove", () => {
 
 updateWeather();
 updateCalendar();
+updatePlants();
 loadTodos();
 updateNews().then(rotateHeadline);
 updateCinema().then(rotateFilm);
 
 setInterval(updateWeather, REFRESH.weather);
 setInterval(updateCalendar, REFRESH.calendar);
+setInterval(updatePlants, REFRESH.plants);
 setInterval(loadTodos, REFRESH.todos);
 setInterval(updateNews, REFRESH.news);
 setInterval(updateCinema, REFRESH.cinema);

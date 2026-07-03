@@ -502,6 +502,74 @@ def save_todos(items):
 
 
 # ---------------------------------------------------------------------------
+# Plant watering reminders (persisted to plants.json)
+# ---------------------------------------------------------------------------
+
+PLANTS_FILE = BASE_DIR / "plants.json"
+
+
+def load_plants():
+    if not PLANTS_FILE.exists():
+        return []
+    try:
+        items = json.loads(PLANTS_FILE.read_text(encoding="utf-8"))
+        return items if isinstance(items, list) else []
+    except json.JSONDecodeError:
+        return []
+
+
+def save_plants(items):
+    PLANTS_FILE.write_text(json.dumps(items, indent=2), encoding="utf-8")
+
+
+def plant_status(plant):
+    """Add daysUntilDue/overdue/dueToday, computed from the server's clock."""
+    today = datetime.now().date()
+    last = plant.get("lastWatered")
+    if last:
+        days_since = (today - datetime.strptime(last, "%Y-%m-%d").date()).days
+        due_in = plant["intervalDays"] - days_since
+    else:
+        due_in = 0  # never watered -> due now
+    return {**plant, "dueInDays": due_in, "overdue": due_in < 0, "dueToday": due_in == 0}
+
+
+def get_plants():
+    plants = [{"index": i, **plant_status(p)} for i, p in enumerate(load_plants())]
+    plants.sort(key=lambda p: p["dueInDays"])
+    return {"items": plants}
+
+
+def add_plant(name, interval_days):
+    name = str(name).strip()[:80]
+    interval_days = max(1, min(365, int(interval_days)))
+    if not name:
+        raise ValueError("Plant name is required")
+    plants = load_plants()
+    plants.append({"name": name, "intervalDays": interval_days, "lastWatered": None})
+    save_plants(plants)
+    return get_plants()
+
+
+def water_plant(index):
+    plants = load_plants()
+    if not (0 <= index < len(plants)):
+        raise ValueError("No such plant")
+    plants[index]["lastWatered"] = datetime.now().date().isoformat()
+    save_plants(plants)
+    return get_plants()
+
+
+def remove_plant(index):
+    plants = load_plants()
+    if not (0 <= index < len(plants)):
+        raise ValueError("No such plant")
+    plants.pop(index)
+    save_plants(plants)
+    return get_plants()
+
+
+# ---------------------------------------------------------------------------
 # HTTP handler
 # ---------------------------------------------------------------------------
 
@@ -533,17 +601,40 @@ class MirrorHandler(SimpleHTTPRequestHandler):
             self.handle_api(get_cinema, ttl=3 * 3600)
         elif self.path == "/api/todos":
             self.send_json({"items": get_todos()})
+        elif self.path == "/api/plants":
+            self.send_json(get_plants())
         else:
             if self.path == "/todo":  # phone-friendly page
                 self.path = "/todo.html"
             super().do_GET()
 
+    def read_json_body(self):
+        length = int(self.headers.get("Content-Length", 0))
+        return json.loads(self.rfile.read(length))
+
     def do_POST(self):
         if self.path == "/api/todos":
             try:
-                length = int(self.headers.get("Content-Length", 0))
-                data = json.loads(self.rfile.read(length))
+                data = self.read_json_body()
                 self.send_json({"items": save_todos(data.get("items", []))})
+            except Exception as exc:
+                self.send_json({"error": str(exc)}, status=400)
+        elif self.path == "/api/plants/add":
+            try:
+                data = self.read_json_body()
+                self.send_json(add_plant(data.get("name", ""), data.get("intervalDays", 7)))
+            except Exception as exc:
+                self.send_json({"error": str(exc)}, status=400)
+        elif self.path == "/api/plants/water":
+            try:
+                data = self.read_json_body()
+                self.send_json(water_plant(int(data.get("index", -1))))
+            except Exception as exc:
+                self.send_json({"error": str(exc)}, status=400)
+        elif self.path == "/api/plants/remove":
+            try:
+                data = self.read_json_body()
+                self.send_json(remove_plant(int(data.get("index", -1))))
             except Exception as exc:
                 self.send_json({"error": str(exc)}, status=400)
         else:

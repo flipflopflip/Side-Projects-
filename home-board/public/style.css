@@ -90,6 +90,22 @@ html, body {
   white-space: nowrap;
 }
 
+/* ---- Plants ---- */
+#plants-list { list-style: none; max-width: 520px; }
+#plants-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  font-size: 19px;
+  padding: 4px 0;
+  color: #ddd;
+  cursor: default;
+}
+#plants-list li.overdue .plant-name { color: #e08a6a; }
+#plants-list .plant-status { color: #888; font-size: 16px; white-space: nowrap; }
+#plants-list li.overdue .plant-status { color: #e08a6a; }
+
 /* ---- Weather ---- */
 #weather-current {
   display: flex;

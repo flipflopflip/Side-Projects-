@@ -54,6 +54,46 @@
       padding: 6px 10px;
     }
     #empty { color: #555; font-size: 19px; padding: 24px 4px; }
+
+    h1.section { margin-top: 34px; }
+    #plants-list li { justify-content: space-between; }
+    #plants-list .plant-name { flex: 1; }
+    #plants-list .plant-status { color: #888; font-size: 15px; margin-right: 6px; }
+    #plants-list li.overdue .plant-status { color: #e08a6a; }
+    #plants-empty { color: #555; font-size: 17px; padding: 16px 4px; }
+    .inline-form {
+      display: flex; gap: 8px;
+      margin-top: 10px;
+    }
+    .inline-form input[type="text"] {
+      flex: 1;
+      background: #161616;
+      border: 1px solid #333;
+      border-radius: 10px;
+      color: #eee;
+      font-size: 16px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    .inline-form input[type="number"] {
+      width: 70px;
+      background: #161616;
+      border: 1px solid #333;
+      border-radius: 10px;
+      color: #eee;
+      font-size: 16px;
+      padding: 10px 8px;
+      outline: none;
+    }
+    .inline-form button {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 10px;
+      color: #ddd;
+      font-size: 20px;
+      width: 44px;
+    }
+    .field-hint { font-size: 12px; color: #555; margin-top: 4px; }
     form {
       position: fixed;
       left: 0; right: 0; bottom: 0;
@@ -93,6 +133,16 @@
     <input id="input" type="text" placeholder="Add a task…" maxlength="200">
     <button type="submit" aria-label="Add">＋</button>
   </form>
+
+  <h1 class="section">Plants 🌱</h1>
+  <ul id="plants-list"></ul>
+  <div id="plants-empty" hidden>No plants added yet</div>
+  <form id="plants-form" class="inline-form" autocomplete="off">
+    <input id="plant-name" type="text" placeholder="Plant name" maxlength="80">
+    <input id="plant-interval" type="number" min="1" max="365" value="7" title="Water every N days">
+    <button type="submit" aria-label="Add plant">＋</button>
+  </form>
+  <div class="field-hint">Tap a plant to mark it watered today. Days = how often to water.</div>
 
   <script>
     let todos = [];
@@ -165,6 +215,65 @@
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) load();
     });
+
+    /* ---- Plants ---- */
+
+    function renderPlants(plants) {
+      const list = document.getElementById("plants-list");
+      list.innerHTML = plants.map((p) =>
+        `<li class="${p.overdue ? "overdue" : ""}" data-index="${p.index}">` +
+        `<span class="plant-name">${esc(p.name)}</span>` +
+        `<span class="plant-status">${p.overdue ? Math.abs(p.dueInDays) + "d overdue"
+          : p.dueToday ? "today" : "in " + p.dueInDays + "d"}</span>` +
+        `<button class="del" data-remove="${p.index}" aria-label="Remove">✕</button></li>`
+      ).join("");
+      document.getElementById("plants-empty").hidden = plants.length > 0;
+    }
+
+    async function loadPlants() {
+      try {
+        const resp = await fetch("/api/plants");
+        renderPlants((await resp.json()).items || []);
+      } catch { /* keep showing the last known list */ }
+    }
+
+    document.getElementById("plants-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("plant-name");
+      const interval = document.getElementById("plant-interval");
+      if (!name.value.trim()) return;
+      await fetch("/api/plants/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.value.trim(), intervalDays: Number(interval.value) || 7 }),
+      });
+      name.value = "";
+      loadPlants();
+    });
+
+    document.getElementById("plants-list").addEventListener("click", async (e) => {
+      const removeIndex = e.target.dataset.remove;
+      const li = e.target.closest("li");
+      if (removeIndex !== undefined) {
+        await fetch("/api/plants/remove", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ index: Number(removeIndex) }),
+        });
+      } else if (li) {
+        await fetch("/api/plants/water", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ index: Number(li.dataset.index) }),
+        });
+      } else {
+        return;
+      }
+      loadPlants();
+    });
+
+    loadPlants();
+    setInterval(loadPlants, 10000);
   </script>
 </body>
 </html>
