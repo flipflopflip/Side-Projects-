@@ -538,3 +538,101 @@ body[data-theme="light"] #mascot-bubble {
   border-color: #c2cad6;
   color: #2a3340;
 }
+
+/* ------------------------------------------------------------
+   Light theme, refined: card surfaces + editorial typography.
+   On a light background structure comes from surfaces, so each
+   module sits on a white card; the to-do list becomes a real
+   left-aligned list with check markers instead of floating
+   centred text.
+   ------------------------------------------------------------ */
+
+body[data-theme="light"] {
+  font-weight: 400;
+  background: #f2f4f8;
+}
+
+/* Cards */
+body[data-theme="light"] .module {
+  background: #ffffff;
+  border: 1px solid #e4e9f0;
+  border-radius: 14px;
+  padding: 18px 22px 20px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 16px rgba(16, 24, 40, 0.05);
+  margin-top: 26px;
+}
+/* All three columns share a top line */
+body[data-theme="light"] .region .module:first-child { margin-top: 0; }
+body[data-theme="light"] .top-left #calendar-module { margin-top: 34px; }
+
+body[data-theme="light"] .module h2,
+body[data-theme="light"] .module-header {
+  font-size: 13.5px;
+  letter-spacing: 2.5px;
+  color: #6b7686;
+  border-bottom: 1px solid #eef1f6;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+/* Clock stays typographic (no card), just darker and firmer */
+body[data-theme="light"] #clock .time { color: #16202c; }
+body[data-theme="light"] #clock .date { color: #4d5868; }
+
+/* The Today card: aligned to the top line, left-aligned list */
+body[data-theme="light"] .center { align-items: flex-start; }
+body[data-theme="light"] #todo-module {
+  text-align: left;
+  width: 100%;
+  max-width: 560px;
+}
+body[data-theme="light"] #todo-module h2 { text-align: left; font-size: 13.5px; }
+body[data-theme="light"] #todo-list li {
+  justify-content: flex-start;
+  font-size: 21px;
+  font-weight: 400;
+  color: #1f2937;
+  padding: 12px 0;
+  gap: 14px;
+  border-bottom: 1px solid #f0f3f7;
+}
+body[data-theme="light"] #todo-list li:last-child { border-bottom: none; }
+body[data-theme="light"] #todo-list li::before {
+  content: "";
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #c9d2df;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #fff;
+}
+body[data-theme="light"] #todo-list li.done::before {
+  content: "✓";
+  background: #9db1cc;
+  border-color: #9db1cc;
+}
+body[data-theme="light"] #todo-list li.done span.todo-text { color: #9aa5b5; }
+body[data-theme="light"] #todo-list button { order: 3; margin-left: auto; }
+body[data-theme="light"] #todo-empty { text-align: left; font-size: 19px; color: #8b96a6; }
+body[data-theme="light"] #todo-form input {
+  width: 100%;
+  text-align: left;
+  margin-top: 14px;
+  border-bottom: 1px solid #dde3ec;
+}
+
+/* News ticker: separated from the page by a hairline, firmer text */
+body[data-theme="light"] .bottom {
+  border-top: 1px solid #e4e9f0;
+  padding-top: 14px;
+}
+body[data-theme="light"] #news-headline { color: #1f2937; }
+
+/* Portrait: the Today card hugs the top of its area, not mid-space */
+@media (orientation: portrait) {
+  body[data-theme="light"] .center { padding-bottom: 0; padding-top: 16px; }
+}
