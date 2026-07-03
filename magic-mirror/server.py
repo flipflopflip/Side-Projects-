@@ -1,0 +1,420 @@
+"""Magic Mirror dashboard server.
+
+A single-file server with no dependencies beyond the Python standard
+library. It serves the dashboard page from ./public and provides small
+JSON APIs for weather (Open-Meteo), news (RSS), calendar (iCal URL) and
+a to-do list stored in todo.json.
+
+Run with:  python server.py   (then open http://localhost:8480)
+"""
+
+import json
+import re
+import time
+from datetime import datetime, timedelta, timezone
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import quote
+from urllib.request import Request, urlopen
+import xml.etree.ElementTree as ET
+
+BASE_DIR = Path(__file__).resolve().parent
+PUBLIC_DIR = BASE_DIR / "public"
+CONFIG_FILE = BASE_DIR / "config.json"
+TODO_FILE = BASE_DIR / "todo.json"
+
+CONFIG = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+
+# ---------------------------------------------------------------------------
+# Small helpers
+# ---------------------------------------------------------------------------
+
+_cache = {}  # url/key -> (expires_at, value)
+
+
+def cached(key, ttl_seconds, producer):
+    """Return a cached value, refreshing it with producer() when stale."""
+    now = time.time()
+    hit = _cache.get(key)
+    if hit and hit[0] > now:
+        return hit[1]
+    value = producer()
+    _cache[key] = (now + ttl_seconds, value)
+    return value
+
+
+def http_get(url, timeout=15):
+    req = Request(url, headers={"User-Agent": "MagicMirrorLite/1.0"})
+    with urlopen(req, timeout=timeout) as resp:
+        return resp.read()
+
+
+# ---------------------------------------------------------------------------
+# Weather (Open-Meteo, free, no API key)
+# ---------------------------------------------------------------------------
+
+WEATHER_CODES = {
+    0: ("Clear sky", "☀️"), 1: ("Mostly clear", "🌤️"), 2: ("Partly cloudy", "⛅"),
+    3: ("Overcast", "☁️"), 45: ("Fog", "🌫️"), 48: ("Icy fog", "🌫️"),
+    51: ("Light drizzle", "🌦️"), 53: ("Drizzle", "🌦️"), 55: ("Heavy drizzle", "🌧️"),
+    56: ("Freezing drizzle", "🌧️"), 57: ("Freezing drizzle", "🌧️"),
+    61: ("Light rain", "🌦️"), 63: ("Rain", "🌧️"), 65: ("Heavy rain", "🌧️"),
+    66: ("Freezing rain", "🌧️"), 67: ("Freezing rain", "🌧️"),
+    71: ("Light snow", "🌨️"), 73: ("Snow", "🌨️"), 75: ("Heavy snow", "❄️"),
+    77: ("Snow grains", "🌨️"), 80: ("Light showers", "🌦️"), 81: ("Showers", "🌧️"),
+    82: ("Heavy showers", "🌧️"), 85: ("Snow showers", "🌨️"), 86: ("Snow showers", "❄️"),
+    95: ("Thunderstorm", "⛈️"), 96: ("Thunderstorm + hail", "⛈️"),
+    99: ("Thunderstorm + hail", "⛈️"),
+}
+
+
+def geocode_city(city):
+    url = ("https://geocoding-api.open-meteo.com/v1/search?name="
+           + quote(city) + "&count=1&language=en&format=json")
+    data = json.loads(http_get(url))
+    results = data.get("results") or []
+    if not results:
+        raise ValueError(f"City not found: {city!r} — check config.json")
+    hit = results[0]
+    label = ", ".join(p for p in [hit.get("name"), hit.get("country_code")] if p)
+    return hit["latitude"], hit["longitude"], label
+
+
+def get_weather():
+    lat, lon = CONFIG.get("latitude"), CONFIG.get("longitude")
+    label = CONFIG.get("city", "")
+    if lat is None or lon is None:
+        lat, lon, label = cached("geocode", 24 * 3600,
+                                 lambda: geocode_city(CONFIG["city"]))
+    imperial = CONFIG.get("units") == "imperial"
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={lat}&longitude={lon}"
+        "&current=temperature_2m,apparent_temperature,relative_humidity_2m,"
+        "weather_code,wind_speed_10m"
+        "&daily=weather_code,temperature_2m_max,temperature_2m_min,"
+        "precipitation_probability_max"
+        "&forecast_days=5&timezone=auto"
+        + ("&temperature_unit=fahrenheit&wind_speed_unit=mph" if imperial else "")
+    )
+    data = json.loads(http_get(url))
+    cur = data["current"]
+    desc, icon = WEATHER_CODES.get(cur["weather_code"], ("", "🌡️"))
+    daily = data["daily"]
+    forecast = []
+    for i, day in enumerate(daily["time"]):
+        d_desc, d_icon = WEATHER_CODES.get(daily["weather_code"][i], ("", ""))
+        forecast.append({
+            "date": day,
+            "icon": d_icon,
+            "description": d_desc,
+            "max": round(daily["temperature_2m_max"][i]),
+            "min": round(daily["temperature_2m_min"][i]),
+            "rainChance": daily["precipitation_probability_max"][i],
+        })
+    return {
+        "location": label,
+        "unit": "°F" if imperial else "°C",
+        "temperature": round(cur["temperature_2m"]),
+        "feelsLike": round(cur["apparent_temperature"]),
+        "humidity": cur["relative_humidity_2m"],
+        "windSpeed": round(cur["wind_speed_10m"]),
+        "windUnit": "mph" if imperial else "km/h",
+        "description": desc,
+        "icon": icon,
+        "forecast": forecast,
+    }
+
+
+# ---------------------------------------------------------------------------
+# News (RSS / Atom feeds)
+# ---------------------------------------------------------------------------
+
+def parse_feed(raw, limit):
+    root = ET.fromstring(raw)
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    items = []
+    source = ""
+    channel = root.find("channel")
+    if channel is not None:  # RSS 2.0
+        source = (channel.findtext("title") or "").strip()
+        for item in channel.findall("item")[:limit]:
+            title = (item.findtext("title") or "").strip()
+            if title:
+                items.append({"title": title, "source": source})
+    else:  # Atom
+        source = (root.findtext("atom:title", namespaces=ns) or "").strip()
+        for entry in root.findall("atom:entry", ns)[:limit]:
+            title = (entry.findtext("atom:title", namespaces=ns) or "").strip()
+            if title:
+                items.append({"title": title, "source": source})
+    return items
+
+
+def get_news():
+    per_feed = CONFIG.get("headlinesPerFeed", 6)
+    headlines = []
+    errors = []
+    for url in CONFIG.get("newsFeeds", []):
+        try:
+            headlines.extend(parse_feed(http_get(url), per_feed))
+        except Exception as exc:  # a dead feed shouldn't kill the whole module
+            errors.append(f"{url}: {exc}")
+    return {"headlines": headlines, "errors": errors}
+
+
+# ---------------------------------------------------------------------------
+# Calendar (iCal / .ics URL, e.g. Google Calendar's secret iCal address)
+# ---------------------------------------------------------------------------
+
+WEEKDAYS = {"MO": 0, "TU": 1, "WE": 2, "TH": 3, "FR": 4, "SA": 5, "SU": 6}
+
+
+def unfold_ics(text):
+    """Join continuation lines (lines starting with space/tab) per RFC 5545."""
+    lines = []
+    for raw in text.splitlines():
+        if raw[:1] in (" ", "\t") and lines:
+            lines[-1] += raw[1:]
+        else:
+            lines.append(raw)
+    return lines
+
+
+def parse_ics_datetime(value, params=""):
+    """Return (naive local datetime, all_day). TZID times are treated as local."""
+    value = value.strip()
+    if "VALUE=DATE" in params or re.fullmatch(r"\d{8}", value):
+        return datetime.strptime(value[:8], "%Y%m%d"), True
+    if value.endswith("Z"):
+        dt = datetime.strptime(value, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
+        return dt.astimezone().replace(tzinfo=None), False
+    return datetime.strptime(value[:15], "%Y%m%dT%H%M%S"), False
+
+
+def parse_ics_events(text):
+    events = []
+    current = None
+    for line in unfold_ics(text):
+        if line == "BEGIN:VEVENT":
+            current = {}
+        elif line == "END:VEVENT":
+            if current is not None and "DTSTART" in current:
+                events.append(current)
+            current = None
+        elif current is not None and ":" in line:
+            prop, value = line.split(":", 1)
+            name, _, params = prop.partition(";")
+            if name in ("SUMMARY", "LOCATION", "DTSTART", "DTEND", "RRULE"):
+                current[name] = (value, params)
+            elif name == "EXDATE":
+                current.setdefault("EXDATE", []).append((value, params))
+    return events
+
+
+def parse_rrule(value):
+    rule = {}
+    for part in value.split(";"):
+        if "=" in part:
+            k, v = part.split("=", 1)
+            rule[k.upper()] = v
+    return rule
+
+
+def expand_event(event, win_start, win_end):
+    """Yield {title, start, end, allDay} occurrences inside the window."""
+    start, all_day = parse_ics_datetime(*event["DTSTART"])
+    duration = timedelta(0)
+    if "DTEND" in event:
+        end, _ = parse_ics_datetime(*event["DTEND"])
+        duration = end - start
+    title = event.get("SUMMARY", ("(no title)", ""))[0]
+    title = title.replace("\\,", ",").replace("\\;", ";").replace("\\n", " ")
+    location = event.get("LOCATION", ("", ""))[0].replace("\\,", ",")
+
+    exdates = set()
+    for value, params in event.get("EXDATE", []):
+        for chunk in value.split(","):
+            try:
+                ex_dt, _ = parse_ics_datetime(chunk, params)
+                exdates.add(ex_dt.date())
+            except ValueError:
+                pass
+
+    def emit(occ_start):
+        occ_end = occ_start + duration
+        if occ_start.date() in exdates:
+            return None
+        if occ_start <= win_end and occ_end >= win_start:
+            return {
+                "title": title,
+                "location": location,
+                "start": occ_start.isoformat(),
+                "end": occ_end.isoformat(),
+                "allDay": all_day,
+            }
+        return None
+
+    if "RRULE" not in event:
+        occ = emit(start)
+        return [occ] if occ else []
+
+    rule = parse_rrule(event["RRULE"][0])
+    freq = rule.get("FREQ", "")
+    interval = max(1, int(rule.get("INTERVAL", 1)))
+    count = int(rule["COUNT"]) if rule.get("COUNT", "").isdigit() else None
+    until = None
+    if "UNTIL" in rule:
+        try:
+            until, _ = parse_ics_datetime(rule["UNTIL"])
+        except ValueError:
+            pass
+
+    occurrences = []
+
+    def take(candidates):
+        n = 0
+        for occ_start in candidates:
+            if occ_start < start:
+                continue
+            n += 1
+            if count is not None and n > count:
+                return
+            if until is not None and occ_start > until:
+                return
+            if occ_start > win_end:
+                return
+            occ = emit(occ_start)
+            if occ:
+                occurrences.append(occ)
+
+    if freq == "DAILY":
+        take(start + timedelta(days=i * interval) for i in range(20000))
+    elif freq == "WEEKLY":
+        bydays = sorted(WEEKDAYS[d] for d in rule.get("BYDAY", "").split(",")
+                        if d in WEEKDAYS) or [start.weekday()]
+        week0 = start - timedelta(days=start.weekday())
+        take(week0 + timedelta(weeks=w * interval, days=wd)
+             for w in range(3000) for wd in bydays)
+    elif freq == "MONTHLY":
+        def monthly():
+            for i in range(0, 1200, interval):
+                month0 = start.month - 1 + i
+                year, month = start.year + month0 // 12, month0 % 12 + 1
+                try:
+                    yield start.replace(year=year, month=month)
+                except ValueError:
+                    continue  # e.g. Jan 31 in a 30-day month
+        take(monthly())
+    elif freq == "YEARLY":
+        def yearly():
+            for i in range(0, 100, interval):
+                try:
+                    yield start.replace(year=start.year + i)
+                except ValueError:
+                    continue  # Feb 29
+        take(yearly())
+    else:
+        occ = emit(start)
+        if occ:
+            occurrences.append(occ)
+    return occurrences
+
+
+def get_calendar():
+    url = CONFIG.get("calendarIcsUrl", "")
+    if not url:
+        return {"configured": False, "events": []}
+    text = http_get(url, timeout=20).decode("utf-8", errors="replace")
+    win_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    win_end = win_start + timedelta(days=CONFIG.get("maxCalendarDays", 14))
+    occurrences = []
+    for event in parse_ics_events(text):
+        try:
+            occurrences.extend(expand_event(event, win_start, win_end))
+        except (ValueError, KeyError):
+            continue  # skip anything this simple parser can't handle
+    occurrences.sort(key=lambda e: e["start"])
+    return {"configured": True, "events": occurrences[:25]}
+
+
+# ---------------------------------------------------------------------------
+# To-do list (persisted to todo.json)
+# ---------------------------------------------------------------------------
+
+def get_todos():
+    if not TODO_FILE.exists():
+        return []
+    try:
+        items = json.loads(TODO_FILE.read_text(encoding="utf-8"))
+        return items if isinstance(items, list) else []
+    except json.JSONDecodeError:
+        return []
+
+
+def save_todos(items):
+    clean = [{"text": str(i.get("text", ""))[:200], "done": bool(i.get("done"))}
+             for i in items if isinstance(i, dict) and str(i.get("text", "")).strip()]
+    TODO_FILE.write_text(json.dumps(clean, indent=2), encoding="utf-8")
+    return clean
+
+
+# ---------------------------------------------------------------------------
+# HTTP handler
+# ---------------------------------------------------------------------------
+
+class MirrorHandler(SimpleHTTPRequestHandler):
+
+    def send_json(self, payload, status=200):
+        body = json.dumps(payload).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def handle_api(self, producer, ttl):
+        try:
+            self.send_json(cached(self.path, ttl, producer))
+        except Exception as exc:
+            self.send_json({"error": str(exc)}, status=502)
+
+    def do_GET(self):
+        if self.path == "/api/weather":
+            self.handle_api(get_weather, ttl=15 * 60)
+        elif self.path == "/api/news":
+            self.handle_api(get_news, ttl=10 * 60)
+        elif self.path == "/api/calendar":
+            self.handle_api(get_calendar, ttl=10 * 60)
+        elif self.path == "/api/todos":
+            self.send_json({"items": get_todos()})
+        else:
+            super().do_GET()
+
+    def do_POST(self):
+        if self.path == "/api/todos":
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                data = json.loads(self.rfile.read(length))
+                self.send_json({"items": save_todos(data.get("items", []))})
+            except Exception as exc:
+                self.send_json({"error": str(exc)}, status=400)
+        else:
+            self.send_json({"error": "not found"}, status=404)
+
+    def log_message(self, fmt, *args):
+        pass  # keep the console quiet
+
+
+def main():
+    port = CONFIG.get("port", 8480)
+    handler = partial(MirrorHandler, directory=str(PUBLIC_DIR))
+    server = ThreadingHTTPServer(("127.0.0.1", port), handler)
+    print(f"Magic Mirror running at http://localhost:{port}  (Ctrl+C to stop)")
+    server.serve_forever()
+
+
+if __name__ == "__main__":
+    main()

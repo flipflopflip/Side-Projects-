@@ -1,0 +1,14 @@
+{
+  "port": 8480,
+  "city": "London",
+  "latitude": null,
+  "longitude": null,
+  "units": "metric",
+  "newsFeeds": [
+    "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+  ],
+  "headlinesPerFeed": 6,
+  "calendarIcsUrl": "",
+  "maxCalendarDays": 14
+}

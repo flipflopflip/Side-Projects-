@@ -1,0 +1,167 @@
+/* MagicMirror-style dark theme */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: #000;
+  color: #fff;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 300;
+  overflow: hidden;
+  cursor: none;
+}
+
+.mirror {
+  height: 100vh;
+  padding: 40px 50px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "left  right"
+    "bottom bottom";
+  gap: 30px;
+}
+
+.top-left  { grid-area: left; }
+.top-right { grid-area: right; text-align: right; }
+.bottom    { grid-area: bottom; text-align: center; padding-bottom: 10px; }
+
+.region { min-width: 0; }
+
+.dimmed { color: #888; }
+
+.module { margin-top: 45px; }
+
+.module h2, .module-header {
+  font-size: 20px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #999;
+  border-bottom: 1px solid #333;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+
+/* ---- Clock ---- */
+#clock .date {
+  font-size: 26px;
+  color: #999;
+  letter-spacing: 1px;
+}
+#clock .time {
+  font-size: 90px;
+  font-weight: 200;
+  line-height: 1.05;
+}
+#clock .seconds {
+  font-size: 32px;
+  color: #777;
+  margin-left: 8px;
+}
+
+/* ---- Calendar ---- */
+.cal-day {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #777;
+  margin: 14px 0 4px;
+}
+.cal-event {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 19px;
+  padding: 3px 0;
+  color: #ddd;
+  max-width: 520px;
+}
+.cal-event .cal-time {
+  color: #888;
+  white-space: nowrap;
+}
+.cal-event .cal-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Weather ---- */
+#weather-current {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 18px;
+}
+.weather-icon { font-size: 64px; line-height: 1; }
+.weather-temp { font-size: 78px; font-weight: 200; }
+#weather-details { font-size: 18px; margin-top: 4px; }
+
+#weather-forecast {
+  margin-top: 18px;
+  margin-left: auto;
+  border-collapse: collapse;
+  font-size: 18px;
+  color: #ccc;
+}
+#weather-forecast td { padding: 3px 0 3px 22px; text-align: right; }
+#weather-forecast td:first-child { color: #888; text-align: left; padding-left: 0; }
+#weather-forecast .min { color: #777; }
+#weather-forecast .rain { color: #6aa5c8; font-size: 15px; }
+
+/* ---- To do ---- */
+#todo-list { list-style: none; max-width: 420px; margin-left: auto; }
+#todo-list li {
+  font-size: 19px;
+  padding: 4px 0;
+  color: #ddd;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+#todo-list li.done span.todo-text {
+  text-decoration: line-through;
+  color: #666;
+}
+#todo-list .todo-text { cursor: default; }
+#todo-list button {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 17px;
+  cursor: pointer;
+  visibility: hidden;
+}
+#todo-list li:hover button { visibility: visible; }
+
+#todo-form input {
+  margin-top: 10px;
+  width: 320px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #333;
+  color: #bbb;
+  font-size: 16px;
+  padding: 5px 2px;
+  outline: none;
+  text-align: right;
+}
+#todo-form input::placeholder { color: #444; }
+
+/* ---- News ticker ---- */
+#news-source { font-size: 15px; text-transform: uppercase; letter-spacing: 2px; }
+#news-headline {
+  font-size: 26px;
+  font-weight: 300;
+  margin-top: 4px;
+  min-height: 34px;
+  transition: opacity 0.6s ease;
+}
+#news-headline.fading { opacity: 0; }
+
+/* Show the mouse again if the user is interacting (e.g. with the to-do list) */
+body.interactive { cursor: default; }

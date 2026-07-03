@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Magic Mirror</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="mirror">
+
+    <section class="region top-left">
+      <div id="clock">
+        <div class="date" id="clock-date">&nbsp;</div>
+        <div class="time"><span id="clock-time">--:--</span><span class="seconds" id="clock-seconds"></span></div>
+      </div>
+
+      <div class="module" id="calendar-module">
+        <h2>Calendar</h2>
+        <div id="calendar-list" class="dimmed">Loading…</div>
+      </div>
+    </section>
+
+    <section class="region top-right">
+      <div class="module" id="weather-module">
+        <div id="weather-location" class="module-header">&nbsp;</div>
+        <div id="weather-current">
+          <span class="weather-icon" id="weather-icon"></span>
+          <span class="weather-temp" id="weather-temp">--°</span>
+        </div>
+        <div id="weather-details" class="dimmed"></div>
+        <table id="weather-forecast"></table>
+      </div>
+
+      <div class="module" id="todo-module">
+        <h2>To Do</h2>
+        <ul id="todo-list"></ul>
+        <form id="todo-form" autocomplete="off">
+          <input id="todo-input" type="text" placeholder="Add a task and press Enter" maxlength="200">
+        </form>
+      </div>
+    </section>
+
+    <section class="region bottom">
+      <div id="news-source" class="dimmed"></div>
+      <div id="news-headline">Loading news…</div>
+    </section>
+
+  </main>
+  <script src="main.js"></script>
+</body>
+</html>
