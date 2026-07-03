@@ -157,7 +157,11 @@ async function updatePlants() {
   try {
     const data = await getJSON("/api/plants");
     const due = data.items.filter((p) => p.dueToday || p.overdue);
+    if (typeof mascotOnPlantsChange === "function") {
+      mascotOnPlantsChange(mascotState.plantsDue, due.length);
+    }
     mascotState.plantsDue = due.length;
+    mascotState.plantNames = due.map((p) => p.name);
     if (!due.length) {
       module.hidden = true;
       return;
@@ -278,7 +282,11 @@ function renderTodos() {
     `<span class="todo-text">${escapeHtml(t.text)}</span></li>`
   ).join("");
   document.getElementById("todo-empty").hidden = todos.length > 0;
-  mascotState.todosLeft = todos.filter((t) => !t.done).length;
+  const left = todos.filter((t) => !t.done).length;
+  if (mascotState.todosLeft !== null && typeof mascotOnTodosChange === "function") {
+    mascotOnTodosChange(mascotState.todosLeft, left);
+  }
+  mascotState.todosLeft = left;
 }
 
 async function saveTodos() {
@@ -336,57 +344,226 @@ document.addEventListener("mousemove", () => {
 });
 
 /* ---------- Boardy the mascot ---------- */
-/* A little bobblehead in the corner with a speech bubble. Quips are built
-   from whatever the modules last fetched, so he reacts to real data. */
+/* A bobblehead with opinions. Lines are grouped by situation, chosen from
+   whatever the modules last fetched, and he remembers what he said recently
+   so he doesn't repeat himself. He gets sleepy late at night, celebrates a
+   cleared list, and gets narky if you keep poking him. */
 
-const mascotState = { weather: null, todosLeft: null, plantsDue: 0, film: null };
-let quipIndex = 0;
+const mascotState = {
+  weather: null, todosLeft: null, plantsDue: 0,
+  plantNames: [], film: null,
+};
 
-function buildQuips() {
-  const quips = [];
-  const hour = new Date().getHours();
-  if (hour < 6) quips.push("You should be asleep.");
-  else if (hour < 10) quips.push("Mornin'. Kettle on?");
-  else if (hour < 17) quips.push("Keeping an eye on things.");
-  else if (hour < 22) quips.push("Evenin'. All grand here.");
-  else quips.push("Go to bed soon, yeah?");
+const QUIPS = {
+  morning: [
+    "Mornin'. Kettle on?",
+    "Up with it. The day won't start itself.",
+    "First one up gets the good mug.",
+    "I've been up all night. No eyelids.",
+    "Porridge weather, I'd say.",
+  ],
+  day: [
+    "Keeping an eye on things.",
+    "All quiet on the western front.",
+    "The lough's not going anywhere. Neither am I.",
+    "Another busy day of standing here.",
+    "If anyone asks, I'm working.",
+    "All systems grand.",
+  ],
+  evening: [
+    "Evenin'. All grand here.",
+    "That's the day nearly put down.",
+    "Feet up soon, I'd say.",
+    "Any plans, or is it the couch? The couch. Good call.",
+  ],
+  night: [
+    "Go to bed soon, yeah?",
+    "Nothing good happens after midnight. Except me.",
+    "I'll keep watch. It's not like I sleep.",
+    "Turn off the big light on your way.",
+  ],
+  smallHours: [
+    "You should be asleep.",
+    "It's the small hours. Even the fridge is resting.",
+    "Whatever it is, it'll keep till morning.",
+  ],
+  monday: ["Monday. We go again.", "Nobody likes Monday. Not even me, and I'm ornamental."],
+  friday: ["Friday. We made it.", "It's Friday somewhere. Here, actually."],
+  sunday: ["Sunday. Do nothing with pride.", "A roast would sort this day right out."],
+  rain: [
+    "Rain on the way. Coat with you.",
+    "That sky means business.",
+    "Soft day incoming. The good jacket, not the light one.",
+    "Umbrella. Trust me, I live beside the forecast.",
+  ],
+  cold: [
+    "Baltic out there. Wrap up.",
+    "Two pairs of socks weather.",
+    "The lough wind would skin ya today.",
+  ],
+  hot: [
+    "Roasting today. Mind the sun.",
+    "Factor 50 and a bit of shade.",
+    "Grand drying out — get the washing on the line.",
+  ],
+  wind: [
+    "Wild wind today. Mind the bins.",
+    "The bins are in danger. Godspeed, bins.",
+  ],
+  grandDay: [
+    "Grand day out there. Go and look at it.",
+    "The weather's behaving itself for once.",
+  ],
+  todosNone: [
+    "Nothing on the list. Suspicious, but well done.",
+    "List's empty. Take the win.",
+  ],
+  todosOne: [
+    "One thing left. You can taste victory.",
+    "One job left. Go on, finish it.",
+  ],
+  todosMany: [
+    (n) => `${n} things on the list. I believe in you. Mostly.`,
+    () => "That list isn't getting shorter by itself.",
+    (n) => `${n} left. Chip away at it.`,
+  ],
+  plants: [
+    (name) => `${name} is gasping for water.`,
+    () => "Water the plants or I start naming them after you.",
+    (name) => `${name} has started giving me looks.`,
+  ],
+  film: [
+    (t) => `${t} is on at the Omniplex.`,
+    (t) => `Cinema's an option tonight: ${t}.`,
+  ],
+  rare: [
+    "I've nodded four thousand times today. Who's counting. Me.",
+    "Being a bobblehead is mostly cardio.",
+    "I saw the mouse. I said nothing.",
+    "Someday I'll see the sea. For now, the fridge.",
+    "I'm the only one in this house who never loses the remote.",
+    "I don't make the news. I just nod at it.",
+  ],
+  annoyed: [
+    "Alright, alright.",
+    "You'll wear out the spring.",
+    "I'm a mascot, not a stress ball.",
+    "Poke the plants instead. They need the attention.",
+  ],
+  allDone: [
+    "That's the lot! Savage stuff.",
+    "List cleared. Someone's flying it today.",
+  ],
+  watered: [
+    "The plants thank you. Quietly.",
+    "Good on ya. The basil lives to fight another day.",
+  ],
+};
+
+/* Special dates trump everything else for the day */
+function seasonalQuip() {
+  const now = new Date();
+  const m = now.getMonth() + 1, d = now.getDate();
+  if (m === 12 && d >= 24 && d <= 26) return "Nollaig shona. Mind the selection boxes.";
+  if (m === 12 && d === 31) return "Last day of the year. I'll nod it out.";
+  if (m === 1 && d === 1) return "New year. Same me. Better you, maybe.";
+  if (m === 3 && d === 17) return "Lá fhéile Pádraig! I'd wear green but I'm committed to amber.";
+  if (m === 10 && d === 31) return "Spooky season. I'm going as a nodding robot.";
+  return null;
+}
+
+const recentQuips = [];
+function pickFrom(pool, arg) {
+  const resolved = pool.map((q) => (typeof q === "function" ? q(arg) : q));
+  const fresh = resolved.filter((q) => !recentQuips.includes(q));
+  const choice = (fresh.length ? fresh : resolved)[
+    Math.floor(Math.random() * (fresh.length ? fresh.length : resolved.length))];
+  recentQuips.push(choice);
+  if (recentQuips.length > 5) recentQuips.shift();
+  return choice;
+}
+
+function chooseQuip() {
+  const seasonal = seasonalQuip();
+  if (seasonal && Math.random() < 0.35) return seasonal;
+  if (Math.random() < 0.10) return pickFrom(QUIPS.rare);
+
+  // Gather every pool that applies right now, pick one pool, then one line.
+  const pools = [];
+  const now = new Date();
+  const hour = now.getHours(), day = now.getDay();
+  if (hour < 6) pools.push([QUIPS.smallHours]);
+  else if (hour < 10) pools.push([QUIPS.morning]);
+  else if (hour < 17) pools.push([QUIPS.day]);
+  else if (hour < 22) pools.push([QUIPS.evening]);
+  else pools.push([QUIPS.night]);
+  if (day === 1 && hour < 12) pools.push([QUIPS.monday]);
+  if (day === 5 && hour >= 12) pools.push([QUIPS.friday]);
+  if (day === 0) pools.push([QUIPS.sunday]);
 
   const w = mascotState.weather;
   if (w) {
     const today = w.forecast && w.forecast[0];
-    if (today && today.rainChance >= 60) quips.push("Rain on the way. Coat with you.");
-    if (w.temperature <= 3) quips.push("Baltic out there. Wrap up.");
-    if (w.temperature >= 23) quips.push("Roasting today. Mind the sun.");
-    if (w.windSpeed >= 40) quips.push("Wild wind today. Mind the bins.");
+    if (today && today.rainChance >= 60) pools.push([QUIPS.rain]);
+    if (w.temperature <= 3) pools.push([QUIPS.cold]);
+    if (w.temperature >= 23) pools.push([QUIPS.hot]);
+    if (w.windSpeed >= 40) pools.push([QUIPS.wind]);
+    if (today && today.rainChance < 30 && w.temperature >= 15 && w.temperature < 23) {
+      pools.push([QUIPS.grandDay]);
+    }
   }
+  if (mascotState.todosLeft === 0) pools.push([QUIPS.todosNone]);
+  else if (mascotState.todosLeft === 1) pools.push([QUIPS.todosOne]);
+  else if (mascotState.todosLeft >= 2) pools.push([QUIPS.todosMany, mascotState.todosLeft]);
+  if (mascotState.plantsDue > 0) pools.push([QUIPS.plants, mascotState.plantNames[0] || "A plant"]);
+  if (mascotState.film && hour >= 12) pools.push([QUIPS.film, mascotState.film]);
 
-  if (mascotState.todosLeft === 0) quips.push("List cleared. Savage.");
-  else if (mascotState.todosLeft === 1) quips.push("One thing left on the list.");
-  else if (mascotState.todosLeft > 1) quips.push(`${mascotState.todosLeft} things left on the list.`);
-
-  if (mascotState.plantsDue === 1) quips.push("A plant is gasping for water.");
-  else if (mascotState.plantsDue > 1) quips.push("The plants are gasping for water.");
-
-  if (mascotState.film) quips.push(`${mascotState.film} is on at the cinema.`);
-
-  quips.push("All systems grand.");
-  return quips;
+  const [pool, arg] = pools[Math.floor(Math.random() * pools.length)];
+  return pickFrom(pool, arg);
 }
 
-function mascotSpeak() {
+function mascotSay(text, excitement = 1700) {
   const mascot = document.getElementById("mascot");
   if (mascot.hidden) return;
   const bubble = document.getElementById("mascot-bubble");
-  const quips = buildQuips();
-  bubble.textContent = quips[quipIndex % quips.length];
-  quipIndex += 1;
+  bubble.textContent = text;
   bubble.classList.add("show");
   mascot.classList.add("excited");
-  setTimeout(() => mascot.classList.remove("excited"), 1700);
-  setTimeout(() => bubble.classList.remove("show"), 12 * 1000);
+  clearTimeout(mascotSay.hideTimer);
+  clearTimeout(mascotSay.calmTimer);
+  mascotSay.calmTimer = setTimeout(() => mascot.classList.remove("excited"), excitement);
+  const readTime = Math.min(14000, 7000 + text.length * 60);
+  mascotSay.hideTimer = setTimeout(() => bubble.classList.remove("show"), readTime);
 }
 
-document.getElementById("mascot").addEventListener("click", mascotSpeak);
+function mascotSpeak() { mascotSay(chooseQuip()); }
+
+/* Celebrations: react the moment the list is cleared or plants are watered */
+function mascotOnTodosChange(before, after) {
+  if (before > 0 && after === 0) mascotSay(pickFrom(QUIPS.allDone), 3500);
+}
+function mascotOnPlantsChange(before, after) {
+  if (before > 0 && after === 0) mascotSay(pickFrom(QUIPS.watered), 3000);
+}
+
+/* Sleepy after 11pm: droopy lids and a slower, deeper nod */
+function mascotMood() {
+  const hour = new Date().getHours();
+  document.getElementById("mascot").classList.toggle("sleepy", hour >= 23 || hour < 6);
+}
+mascotMood();
+setInterval(mascotMood, 60 * 1000);
+
+/* Poke him too much and he lets you know */
+let pokes = [];
+document.getElementById("mascot").addEventListener("click", () => {
+  const now = Date.now();
+  pokes = pokes.filter((t) => now - t < 6000);
+  pokes.push(now);
+  if (pokes.length >= 3) mascotSay(pickFrom(QUIPS.annoyed), 600);
+  else mascotSpeak();
+});
+
 setTimeout(mascotSpeak, 5 * 1000);       // first hello shortly after load
 setInterval(mascotSpeak, 50 * 1000);     // then a fresh quip just under the minute
 

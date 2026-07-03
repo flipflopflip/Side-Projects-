@@ -429,6 +429,15 @@ body[data-theme^="pipboy"] #mascot {
   50%      { opacity: 1; }
 }
 
+/* Sleepy after 11pm: heavy lids, slower nod, smaller smile */
+#mascot.sleepy .m-head { animation-duration: 6.5s; }
+#mascot.sleepy .m-eye {
+  animation: none;
+  transform: scaleY(0.4);
+}
+#mascot.sleepy .m-mouth { d: path("M47 67 Q60 71 73 67"); }
+#mascot.sleepy .m-tip, #mascot.sleepy .m-chest { animation-duration: 5s; }
+
 /* Speech bubble */
 #mascot-bubble {
   position: absolute;

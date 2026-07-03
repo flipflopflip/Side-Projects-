@@ -384,13 +384,24 @@ which helps an old always-on LCD avoid image retention.
 ### Boardy, the mascot
 
 A little bobblehead robot lives in the bottom-left corner: his head bobs,
-he blinks, and every minute or so a speech bubble pops up with a comment
-built from the board's real data — rain coming, how many tasks are left,
-plants gasping for water, what's on at the cinema, or just telling you to
-go to bed. He draws himself in whatever theme is active (phosphor line-art
-in the Pip-Boy themes). Click or tap him for an instant quip. Turn him off
-with the checkbox on the Settings page's Appearance card if he gets on
-your nerves.
+he blinks, and every minute or so a speech bubble pops up. He has a proper
+personality — a large pool of lines he rotates through without repeating
+himself, chosen from the board's real data and the time of day:
+
+- weather opinions ("Baltic out there. Wrap up.", "The bins are in danger.
+  Godspeed, bins.")
+- your list ("One thing left. You can taste victory.") — and he celebrates
+  on the spot when you clear it
+- thirsty plants, by name ("Basil has started giving me looks.")
+- what's on at the Omniplex, Monday dread, Friday relief, and the odd
+  existential thought ("Being a bobblehead is mostly cardio.")
+- seasonal lines around Christmas, New Year, St Patrick's Day and Halloween
+
+After 11pm he gets visibly sleepy — heavy eyelids, a slower nod — and tells
+you to go to bed. Click him for an instant quip; poke him three times in a
+row and he gets narky about it. He draws himself in whatever theme is
+active (phosphor line-art in the Pip-Boy themes). Turn him off with the
+checkbox on the Settings page's Appearance card, you monster.
 
 ## Customising
 
