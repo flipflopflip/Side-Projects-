@@ -125,7 +125,10 @@
   </style>
 </head>
 <body>
-  <h1>Today</h1>
+  <div style="display: flex; align-items: baseline; justify-content: space-between;">
+    <h1 style="flex: 1;">Today</h1>
+    <a href="/settings" aria-label="Settings" style="color: #667; text-decoration: none; font-size: 13px; letter-spacing: 1px; padding: 4px 0 4px 16px;">SETTINGS</a>
+  </div>
   <div id="status"></div>
   <ul id="list"></ul>
   <div id="empty" hidden>Nothing to do</div>

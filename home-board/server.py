@@ -640,10 +640,13 @@ def save_config(incoming):
     city = str(incoming.get("city", "")).strip()
     if not city:
         raise ValueError("City can't be empty")
+    if city != CONFIG.get("city"):
+        # A *changed* city overrides any previously pinned coordinates;
+        # re-saving with the same city keeps them (some villages aren't in
+        # the geocoder and rely on hand-set coordinates).
+        new["latitude"] = None
+        new["longitude"] = None
     new["city"] = city
-    # A typed city overrides any previously pinned coordinates.
-    new["latitude"] = None
-    new["longitude"] = None
 
     new["units"] = "imperial" if incoming.get("units") == "imperial" else "metric"
 
