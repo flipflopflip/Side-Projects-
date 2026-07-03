@@ -5,6 +5,7 @@ const REFRESH = {
   news: 10 * 60 * 1000,
   calendar: 10 * 60 * 1000,
   cinema: 3 * 3600 * 1000,
+  todos: 5 * 1000, // picks up edits made from a phone via /todo
   headlineRotate: 10 * 1000,
   filmRotate: 5 * 1000,
 };
@@ -255,6 +256,7 @@ updateCinema().then(rotateFilm);
 
 setInterval(updateWeather, REFRESH.weather);
 setInterval(updateCalendar, REFRESH.calendar);
+setInterval(loadTodos, REFRESH.todos);
 setInterval(updateNews, REFRESH.news);
 setInterval(updateCinema, REFRESH.cinema);
 setInterval(rotateHeadline, REFRESH.headlineRotate);

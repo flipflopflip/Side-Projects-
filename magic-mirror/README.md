@@ -57,6 +57,7 @@ You never need to touch the code. **Every setting lives in
 | `maxCalendarDays` | How far ahead the calendar looks | A number of days, e.g. `14` |
 | `cinema` | Local cinema listings | See [Cinema listings](#-cinema-listings) below |
 | `port` | Local address of the dashboard | Leave as `8480` unless something else uses it |
+| `lanAccess` | Phone access on home Wi-Fi | `true` (default) or `false` — see [phone access](#-updating-the-to-do-list-from-your-phone) |
 
 ⚠️ **JSON is picky.** Keep the quotes, and note the commas: every line has a
 comma after it *except the last one inside each `{ }` or `[ ]`*. If the
@@ -137,6 +138,39 @@ last one:
   "https://feeds.bloomberg.com/technology/news.rss"
 ],
 ```
+
+---
+
+## 📱 Updating the to-do list from your phone
+
+The mirror serves a phone-friendly to-do page to every device on your home
+Wi-Fi. Anything you tick off or add on your phone appears on the mirror
+within a few seconds (and vice versa).
+
+1. Start the mirror. The server prints the address to use, e.g.
+   `On your phone (same Wi-Fi): http://192.168.1.23:8480/todo`
+   (You can also find the laptop's address with `ipconfig` in Command
+   Prompt — use the "IPv4 Address" of the Wi-Fi adapter.)
+2. **The first time the server runs, Windows Firewall pops up a dialog** —
+   tick **"Private networks"** and click **Allow access**, or phones won't
+   be able to connect.
+3. Open that address in your phone's browser. Tap a task to mark it done,
+   ✕ to remove it, and use the box at the bottom to add one.
+4. To make it feel like an app: in Safari/Chrome on the phone, use
+   **Share → Add to Home Screen**. One tap from then on.
+
+Give the laptop a **fixed IP** (or use its computer name, e.g.
+`http://my-laptop:8480/todo`) so the address never changes — most routers
+let you "reserve" an address for a device.
+
+Notes:
+- This only works at home, on the same Wi-Fi — which also means nothing is
+  exposed to the internet. If you want *anywhere* access, the clean options
+  are a free [Tailscale](https://tailscale.com) network (the phone address
+  then works from anywhere) or switching the list to a to-do app with an
+  API like Todoist.
+- Set `"lanAccess": false` in `config.json` to make the mirror
+  laptop-only again.
 
 ---
 

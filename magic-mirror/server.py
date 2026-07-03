@@ -534,6 +534,8 @@ class MirrorHandler(SimpleHTTPRequestHandler):
         elif self.path == "/api/todos":
             self.send_json({"items": get_todos()})
         else:
+            if self.path == "/todo":  # phone-friendly page
+                self.path = "/todo.html"
             super().do_GET()
 
     def do_POST(self):
@@ -551,11 +553,29 @@ class MirrorHandler(SimpleHTTPRequestHandler):
         pass  # keep the console quiet
 
 
+def lan_ip():
+    """Best-effort LAN address of this machine (no traffic is actually sent)."""
+    import socket
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+    except OSError:
+        return None
+
+
 def main():
     port = CONFIG.get("port", 8480)
+    # lanAccess lets phones on the same Wi-Fi open the dashboard and the
+    # /todo page. Set it to false in config.json to keep it laptop-only.
+    host = "0.0.0.0" if CONFIG.get("lanAccess", True) else "127.0.0.1"
     handler = partial(MirrorHandler, directory=str(PUBLIC_DIR))
-    server = ThreadingHTTPServer(("127.0.0.1", port), handler)
+    server = ThreadingHTTPServer((host, port), handler)
     print(f"Magic Mirror running at http://localhost:{port}  (Ctrl+C to stop)")
+    if host == "0.0.0.0":
+        ip = lan_ip()
+        if ip:
+            print(f"On your phone (same Wi-Fi): http://{ip}:{port}/todo")
     server.serve_forever()
 
 
