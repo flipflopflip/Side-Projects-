@@ -27,9 +27,10 @@ get a simple form for your city, units, calendar link, news feeds and cinema —
 fill it in, hit **Save**, and the board updates within a few seconds. No files,
 no risk of a missing comma. This is the recommended way to set things up.
 
-The city defaults to **Limerick** and the cinema to **Omniplex Limerick**, so
-weather and films are correct out of the box — you mainly just need to paste
-your calendar link (see [Calendar](#connecting-your-google-calendar)).
+The location defaults to **Garrykennedy, Co. Tipperary** and the cinema to
+**Omniplex Limerick**, so weather and films are correct out of the box — you
+mainly just need to paste your calendar link
+(see [Calendar](#connecting-your-google-calendar)).
 
 ## Configuration — the manual way: `config.json`
 
@@ -41,9 +42,12 @@ this:
 ```json
 {
   "port": 8480,
-  "city": "Limerick",
-  "latitude": null,
-  "longitude": null,
+  "lanAccess": false,
+  "password": "",
+  "allowDisplayEditing": false,
+  "city": "Garrykennedy",
+  "latitude": 52.8747,
+  "longitude": -8.3564,
   "units": "metric",
   "newsFeeds": [
     "https://www.rte.ie/feeds/rss/?index=/news/",
@@ -71,7 +75,9 @@ this:
 | `maxCalendarDays` | How far ahead the calendar looks | A number of days, e.g. `14` |
 | `cinema` | Local cinema listings | See [Cinema listings](#-cinema-listings) below |
 | `port` | Local address of the dashboard | Leave as `8480` unless something else uses it |
-| `lanAccess` | Phone access on home Wi-Fi | `true` (default) or `false` — see [phone access](#-updating-the-to-do-list-from-your-phone) |
+| `lanAccess` | Phone access on home Wi-Fi | `false` (default) keeps it laptop-only; `true` opens it to phones — see [phone access](#updating-the-to-do-list-and-plants-from-your-phone) |
+| `password` | Login for phone access | Set a password when `lanAccess` is `true`, so only devices that know it can connect |
+| `allowDisplayEditing` | Let the big screen make changes | `false` (default) makes the always-on display read-only when `lanAccess` is on; `true` lets it edit too |
 
 **JSON is picky.** Keep the quotes, and note the commas: every line has a
 comma after it *except the last one inside each `{ }` or `[ ]`*. If the
@@ -157,22 +163,34 @@ last one:
 
 ## Updating the to-do list (and plants) from your phone
 
-Home Board serves a phone-friendly page to every device on your home
-Wi-Fi, with both the to-do list and the plant watering list on it. Anything
-you tick off or add on your phone appears on the display within a few
-seconds (and vice versa).
+**By default the dashboard is laptop-only** — nothing on your Wi-Fi can see
+it. Phone access is something you turn on deliberately, with a password. Here's
+how to enable it safely:
 
-1. Start Home Board. The server prints the address to use, e.g.
+1. Open `config.json` and set two things:
+   ```json
+   "lanAccess": true,
+   "password": "pick-something-here",
+   ```
+   (Or set them on the Settings page — but the password field is only in
+   `config.json`.) Then restart Home Board.
+2. The server prints the address to use, e.g.
    `On your phone (same Wi-Fi): http://192.168.1.23:8480/todo`
    (You can also find the laptop's address with `ipconfig` in Command
    Prompt — use the "IPv4 Address" of the Wi-Fi adapter.)
-2. **The first time the server runs, Windows Firewall pops up a dialog** —
-   tick **"Private networks"** and click **Allow access**, or phones won't
-   be able to connect.
-3. Open that address in your phone's browser. Tap a task to mark it done,
-   ✕ to remove it, and use the box at the bottom to add one.
-4. To make it feel like an app: in Safari/Chrome on the phone, use
+3. **The first time it runs with `lanAccess` on, Windows Firewall pops up a
+   dialog** — tick **"Private networks"** and click **Allow access**, or
+   phones won't be able to connect.
+4. Open that address on your phone. It asks for the password **once** (any
+   username, the password you set), then remembers it. Tap a task to mark it
+   done, ✕ to remove it, and use the box at the bottom to add one.
+5. To make it feel like an app: in Safari/Chrome on the phone, use
    **Share → Add to Home Screen**. One tap from then on.
+
+Without the password, a device on your Wi-Fi sees nothing at all — not even
+the page. Note the big always-on display becomes **read-only** once phone
+access is on (changes come from your phone); set `"allowDisplayEditing": true`
+if you want to edit from the big screen too.
 
 ### Plants
 
@@ -188,13 +206,31 @@ Give the laptop a **fixed IP** (or use its computer name, e.g.
 let you "reserve" an address for a device.
 
 Notes:
-- This only works at home, on the same Wi-Fi — which also means nothing is
-  exposed to the internet. If you want *anywhere* access, the clean options
-  are a free [Tailscale](https://tailscale.com) network (the phone address
-  then works from anywhere) or switching the list to a to-do app with an
-  API like Todoist.
-- Set `"lanAccess": false` in `config.json` to make it
-  laptop-only again.
+- This only works at home, on the same Wi-Fi — nothing is exposed to the
+  internet (the server never listens beyond your local network unless you
+  deliberately forward a port on your router). If you want *anywhere* access,
+  the clean option is a free [Tailscale](https://tailscale.com) network, so
+  the phone address works from anywhere without opening anything up.
+- Leaving `password` blank while `lanAccess` is on means **no login** —
+  anyone on your Wi-Fi can read and change things. The server prints a warning
+  at startup if you do this. Always set a password when opening LAN access.
+
+### How the security works
+
+- **Default: laptop-only.** The server binds to `localhost`, so only the
+  laptop itself can reach it. Nothing on the network can connect.
+- **With `lanAccess: true` + a password**, any other device (your phone) must
+  send the password for *every* request — reads and writes alike. Wrong or
+  missing password → it sees nothing, not even the page.
+- **The local display is trusted** (it's physically your laptop) so it never
+  has to log in, but it's **read-only** by default when LAN access is on, so
+  the always-on screen can't be used to change your data. `allowDisplayEditing`
+  re-enables editing there.
+- The calendar's secret iCal URL is never handed out over the network — the
+  Settings page only reports whether one is saved, never the link itself.
+- It's plain HTTP (fine on a trusted home network; WPA2 already encrypts your
+  Wi-Fi). If you want application-layer encryption too, that's a further step
+  we can add.
 
 ---
 

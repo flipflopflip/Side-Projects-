@@ -329,8 +329,23 @@ document.addEventListener("mousemove", () => {
   cursorTimer = setTimeout(() => document.body.classList.remove("interactive"), 4000);
 });
 
+/* ---------- Display mode ---------- */
+/* When the board is read-only (LAN access is on and editing from the big
+   screen is disabled), hide the "add a task" box so it isn't misleading —
+   changes are made from the phone instead. */
+async function applyDisplayMode() {
+  try {
+    const cfg = await getJSON("/api/config");
+    if (cfg.displayEditable === false) {
+      const form = document.getElementById("todo-form");
+      if (form) form.hidden = true;
+    }
+  } catch { /* default to showing the input */ }
+}
+
 /* ---------- Kick everything off ---------- */
 
+applyDisplayMode();
 updateWeather();
 updateCalendar();
 updatePlants();

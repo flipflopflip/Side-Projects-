@@ -8,6 +8,8 @@ a to-do list stored in todo.json.
 Run with:  python server.py   (then open http://localhost:8480)
 """
 
+import base64
+import hmac
 import json
 import re
 import time
@@ -609,7 +611,18 @@ def public_config():
             "venue": cinema.get("venue", ""),
             "displayName": cinema.get("displayName", ""),
         },
+        # Whether the always-on display itself may make changes; the phone
+        # page (with the password, when required) always can.
+        "displayEditable": display_can_write(),
     }
+
+
+def display_can_write():
+    """The local display may write unless the LAN is open and the user hasn't
+    explicitly re-enabled editing on the big screen."""
+    if not CONFIG.get("lanAccess", False):
+        return True  # localhost-only: the laptop is the only client, it's you
+    return bool(CONFIG.get("allowDisplayEditing", False))
 
 
 def _clean_url(value):
@@ -681,7 +694,55 @@ class MirrorHandler(SimpleHTTPRequestHandler):
         except Exception as exc:
             self.send_json({"error": str(exc)}, status=502)
 
+    # --- Access control -----------------------------------------------------
+    # The display runs on the laptop itself, so its requests come from
+    # localhost; the phone comes from a LAN address. Reads from the LAN require
+    # the password; writes from the LAN require the password too, and writes
+    # from the local display are blocked when the screen is meant to be
+    # read-only. See docstrings on display_can_write() and the README.
+
+    def is_local(self):
+        return self.client_address[0] in ("127.0.0.1", "::1")
+
+    def password_ok(self):
+        password = str(CONFIG.get("password", ""))
+        if not password:
+            return False
+        header = self.headers.get("Authorization", "")
+        if not header.startswith("Basic "):
+            return False
+        try:
+            decoded = base64.b64decode(header[6:]).decode("utf-8", "replace")
+        except (ValueError, base64.binascii.Error):
+            return False
+        _user, _, supplied = decoded.partition(":")
+        return hmac.compare_digest(supplied, password)
+
+    def demand_password(self):
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", 'Basic realm="Home Board"')
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def authorize(self, writing):
+        """Return True if this request may proceed; otherwise send the
+        rejection response and return False."""
+        if self.is_local():
+            if writing and not display_can_write():
+                self.send_json({"error": "The display is read-only; make "
+                                "changes from your phone."}, status=403)
+                return False
+            return True
+        # Remote (a phone / any other device on the Wi-Fi): always needs the
+        # password, for both reads and writes.
+        if self.password_ok():
+            return True
+        self.demand_password()
+        return False
+
     def do_GET(self):
+        if not self.authorize(writing=False):
+            return
         if self.path == "/api/weather":
             self.handle_api(lambda: resilient("weather", get_weather), ttl=15 * 60)
         elif self.path == "/api/news":
@@ -706,6 +767,8 @@ class MirrorHandler(SimpleHTTPRequestHandler):
         return json.loads(self.rfile.read(length))
 
     def do_POST(self):
+        if not self.authorize(writing=True):
+            return
         if self.path == "/api/todos":
             try:
                 data = self.read_json_body()
@@ -755,16 +818,30 @@ def lan_ip():
 
 def main():
     port = CONFIG.get("port", 8480)
-    # lanAccess lets phones on the same Wi-Fi open the dashboard and the
-    # /todo page. Set it to false in config.json to keep it laptop-only.
-    host = "0.0.0.0" if CONFIG.get("lanAccess", True) else "127.0.0.1"
+    # By default the server is bound to localhost, so it's reachable only from
+    # the laptop itself — nothing on the Wi-Fi can see it. Set "lanAccess": true
+    # in config.json to open it to phones on the same network; when you do, set
+    # a "password" too so it isn't wide open.
+    lan = CONFIG.get("lanAccess", False)
+    host = "0.0.0.0" if lan else "127.0.0.1"
     handler = partial(MirrorHandler, directory=str(PUBLIC_DIR))
     server = ThreadingHTTPServer((host, port), handler)
+
     print(f"Home Board running at http://localhost:{port}  (Ctrl+C to stop)")
-    if host == "0.0.0.0":
+    if not lan:
+        print("Access: this laptop only (localhost). Set \"lanAccess\": true in "
+              "config.json to allow phones.")
+    else:
         ip = lan_ip()
-        if ip:
-            print(f"On your phone (same Wi-Fi): http://{ip}:{port}/todo")
+        where = f"http://{ip}:{port}/todo" if ip else f"http://<this-laptop>:{port}/todo"
+        if CONFIG.get("password"):
+            print(f"On your phone (same Wi-Fi): {where}")
+            print("A password is required; your phone will prompt for it once.")
+        else:
+            print("\n  !! WARNING: lanAccess is on but no password is set.")
+            print("  !! Anyone on your Wi-Fi can read your calendar/to-dos and")
+            print("  !! change settings. Set \"password\" in config.json.\n")
+            print(f"On your phone (same Wi-Fi): {where}")
     server.serve_forever()
 
 

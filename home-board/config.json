@@ -1,9 +1,11 @@
 {
   "port": 8480,
-  "lanAccess": true,
-  "city": "Limerick",
-  "latitude": null,
-  "longitude": null,
+  "lanAccess": false,
+  "password": "",
+  "allowDisplayEditing": false,
+  "city": "Garrykennedy",
+  "latitude": 52.8747,
+  "longitude": -8.3564,
   "units": "metric",
   "newsFeeds": [
     "https://www.rte.ie/feeds/rss/?index=/news/",
