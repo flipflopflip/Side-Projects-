@@ -1,4 +1,4 @@
-"""Magic Mirror dashboard server.
+"""Home Board dashboard server.
 
 A single-file server with no dependencies beyond the Python standard
 library. It serves the dashboard page from ./public and provides small
@@ -48,7 +48,7 @@ def http_get(url, timeout=15):
     # Some news CDNs (e.g. Bloomberg's) reject requests without a
     # browser-like User-Agent, so send one.
     req = Request(url, headers={
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) MagicMirrorLite/1.0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) HomeBoard/1.0",
         "Accept": "*/*",
     })
     with urlopen(req, timeout=timeout) as resp:
@@ -571,7 +571,7 @@ def main():
     host = "0.0.0.0" if CONFIG.get("lanAccess", True) else "127.0.0.1"
     handler = partial(MirrorHandler, directory=str(PUBLIC_DIR))
     server = ThreadingHTTPServer((host, port), handler)
-    print(f"Magic Mirror running at http://localhost:{port}  (Ctrl+C to stop)")
+    print(f"Home Board running at http://localhost:{port}  (Ctrl+C to stop)")
     if host == "0.0.0.0":
         ip = lan_ip()
         if ip:

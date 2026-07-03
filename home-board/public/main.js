@@ -1,4 +1,4 @@
-/* Magic Mirror dashboard logic: fetch each module on its own interval. */
+/* Home Board dashboard logic: fetch each module on its own interval. */
 
 const REFRESH = {
   weather: 15 * 60 * 1000,

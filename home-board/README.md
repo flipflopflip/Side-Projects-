@@ -1,6 +1,6 @@
-# Magic Mirror (for an old Windows laptop)
+# Home Board (for an old Windows laptop)
 
-A lightweight [MagicMirror²](https://magicmirror.builders/)-style dashboard:
+A lightweight, MagicMirror²-inspired always-on dashboard:
 a fullscreen black page showing the **time, your calendar, the weather, a
 to-do list, and rotating news headlines**. It starts automatically when the
 laptop boots.
@@ -13,7 +13,7 @@ plus a plain HTML/CSS/JS page, so it runs happily on old hardware.
 | Weather | [Open-Meteo](https://open-meteo.com) — free, **no API key or sign-up needed** |
 | News | RSS feeds — RTÉ News, The Economist and Bloomberg by default |
 | Calendar | Any iCal (`.ics`) link — Google Calendar, Outlook or iCloud |
-| To-do list | Stored on the laptop in `todo.json`; add tasks right on the mirror |
+| To-do list | Stored on the laptop in `todo.json`; add tasks right on the display |
 | Cinema | Today's films & showtimes at your local cinema (Omniplex Limerick by default), one film at a time, rotating every 5 seconds |
 
 ---
@@ -21,7 +21,7 @@ plus a plain HTML/CSS/JS page, so it runs happily on old hardware.
 ## ⚙️ Configuration — everything is in ONE file: `config.json`
 
 You never need to touch the code. **Every setting lives in
-`magic-mirror/config.json`.** Open it by right-clicking the file →
+`home-board/config.json`.** Open it by right-clicking the file →
 *Open with* → *Notepad*. It looks like this:
 
 ```json
@@ -61,18 +61,18 @@ You never need to touch the code. **Every setting lives in
 
 ⚠️ **JSON is picky.** Keep the quotes, and note the commas: every line has a
 comma after it *except the last one inside each `{ }` or `[ ]`*. If the
-mirror won't start after an edit, you've probably lost a comma or a quote —
+display won't start after an edit, you've probably lost a comma or a quote —
 paste the file into <https://jsonlint.com> to see exactly where.
 
-After changing `config.json`, restart the mirror (`stop_mirror.bat`, then
-`start_mirror.bat`).
+After changing `config.json`, restart Home Board (`stop_home_board.bat`, then
+`start_home_board.bat`).
 
 ---
 
 ## 📅 Connecting your Google Calendar
 
 You need your calendar's **"Secret address in iCal format"** — a private URL
-that lets the mirror read your events without any login or API key.
+that lets it read your events without any login or API key.
 
 1. Open [calendar.google.com](https://calendar.google.com) in a browser
    **on a computer** (the phone app doesn't show this setting).
@@ -89,7 +89,7 @@ that lets the mirror read your events without any login or API key.
    "calendarIcsUrl": "https://calendar.google.com/calendar/ical/yourname%40gmail.com/private-abc123/basic.ics",
    ```
 
-7. Restart the mirror. Your next two weeks of events appear under the clock.
+7. Restart it. Your next two weeks of events appear under the clock.
 
 🔒 **Keep that URL private** — anyone who has it can read your calendar.
 (If it ever leaks, the same Google settings page has a "Reset" button that
@@ -106,7 +106,7 @@ public GitHub repo.
 
 ## 📰 News feeds
 
-`newsFeeds` is a list of RSS feed URLs. The mirror grabs the top headlines
+`newsFeeds` is a list of RSS feed URLs. It grabs the top headlines
 from each and rotates through them at the bottom of the screen. The defaults
 are RTÉ News, The Economist and Bloomberg Markets. Other feeds you can
 copy-paste in:
@@ -126,7 +126,7 @@ copy-paste in:
 Most news sites publish RSS — search "*site name* RSS feed" and paste the URL
 into the list. **To check a feed works**, open its URL in a browser: you
 should see a page of raw XML mentioning the latest headlines. If a feed dies,
-the mirror keeps working and just skips it (the failing URL is reported in
+it keeps working and just skips it (the failing URL is reported in
 the `errors` field of <http://localhost:8480/api/news>).
 
 Remember the JSON comma rule — commas *between* the URLs, none after the
@@ -143,11 +143,11 @@ last one:
 
 ## 📱 Updating the to-do list from your phone
 
-The mirror serves a phone-friendly to-do page to every device on your home
-Wi-Fi. Anything you tick off or add on your phone appears on the mirror
+Home Board serves a phone-friendly to-do page to every device on your home
+Wi-Fi. Anything you tick off or add on your phone appears on the display
 within a few seconds (and vice versa).
 
-1. Start the mirror. The server prints the address to use, e.g.
+1. Start Home Board. The server prints the address to use, e.g.
    `On your phone (same Wi-Fi): http://192.168.1.23:8480/todo`
    (You can also find the laptop's address with `ipconfig` in Command
    Prompt — use the "IPv4 Address" of the Wi-Fi adapter.)
@@ -169,25 +169,25 @@ Notes:
   are a free [Tailscale](https://tailscale.com) network (the phone address
   then works from anywhere) or switching the list to a to-do app with an
   API like Todoist.
-- Set `"lanAccess": false` in `config.json` to make the mirror
+- Set `"lanAccess": false` in `config.json` to make it
   laptop-only again.
 
 ---
 
 ## 🎬 Cinema listings
 
-The mirror shows **today's films at your cinema, one at a time, rotating
+Home Board shows **today's films at your cinema, one at a time, rotating
 every 5 seconds** with the showtimes underneath. Three providers, chosen by
 `cinema.provider` in `config.json`:
 
 **`"omniplex"` (default)** — reads the listings from an omniplex.ie cinema
 page. `venue` is the last part of the cinema's web address: for
 `omniplex.ie/cinema/limerick` it's `"limerick"`. `displayName` is just the
-heading shown on the mirror.
+heading shown on the display.
 
 **`"cineworld"`** — for Cineworld cinemas (Ireland & UK). Set
 `"region": "ie"` or `"uk"` and a `cinemaId`. Don't know the id? Leave
-`cinemaId` empty, start the mirror, and open
+`cinemaId` empty, start it, and open
 <http://localhost:8480/api/cinema> — it lists every cinema with its id.
 
 ```json
@@ -210,7 +210,7 @@ next to `server.py` and type in what's on:
 Set `"provider": "off"` to hide the module entirely.
 
 ⚠️ *Heads-up:* the Omniplex website sometimes blocks automated requests. If
-the mirror says "Listings unavailable", open
+it says "Listings unavailable", open
 <http://localhost:8480/api/cinema> to see the exact error — and worst case,
 switch to `"manual"` mode.
 
@@ -231,9 +231,9 @@ in your calendar link.
 
 ### 3. Try it
 
-Double-click **`start_mirror.bat`**. After a couple of seconds the mirror
-opens fullscreen in Edge. To get out: press **Alt+F4**, or run
-`stop_mirror.bat`.
+Double-click **`start_home_board.bat`**. After a couple of seconds the
+dashboard opens fullscreen in Edge. To get out: press **Alt+F4**, or run
+`stop_home_board.bat`.
 
 You can also just run `python server.py` and open
 <http://localhost:8480> in any browser.
@@ -241,9 +241,9 @@ You can also just run `python server.py` and open
 ### 4. Make it start when the laptop boots
 
 1. Press **Win+R**, type `shell:startup`, press Enter — a folder opens.
-2. Right-click `start_mirror.bat` → *Show more options* → **Create shortcut**,
+2. Right-click `start_home_board.bat` → *Show more options* → **Create shortcut**,
    and move the shortcut into that folder.
-3. (Recommended) Set Windows to log in automatically, or the mirror will wait
+3. (Recommended) Set Windows to log in automatically, or Home Board will wait
    at the login screen.
 
 ### 5. Keep the screen awake
@@ -260,7 +260,7 @@ closing the lid doesn't sleep the machine if you'll use an external monitor.)
 
 ---
 
-## Using the mirror
+## Using it
 
 - The **to-do list** has a small input box — click it, type a task, press
   Enter. Click a task to mark it done; hover and click ✕ to remove it.
@@ -272,7 +272,7 @@ closing the lid doesn't sleep the machine if you'll use an external monitor.)
 
 | Symptom | Fix |
 |---|---|
-| Mirror won't start after editing config | Broken JSON — check it at <https://jsonlint.com> |
+| Won't start after editing config | Broken JSON — check it at <https://jsonlint.com> |
 | "Weather unavailable" | Check the laptop is online; check `city` spelling |
 | "Calendar unavailable" / no events | Open the `calendarIcsUrl` in a browser — it should download a `.ics` file. If not, re-copy the secret address. |
 | One news source never appears | Open the feed URL in a browser — if it's not XML, replace it |

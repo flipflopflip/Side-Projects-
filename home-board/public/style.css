@@ -1,4 +1,4 @@
-/* MagicMirror-style dark theme */
+/* Home Board dark theme */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -12,7 +12,7 @@ html, body {
   cursor: none;
 }
 
-.mirror {
+.board {
   height: 100vh;
   padding: 40px 50px;
   display: grid;
